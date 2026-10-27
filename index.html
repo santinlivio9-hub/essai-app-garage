@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="css/tailwind.css">
   <link rel="stylesheet" href="css/app.css">
   <style>html,body{background:#06070a}</style>
+  <script type="importmap">{"imports":{"three":"./vendor/three/three.module.min.js","three/addons/":"./vendor/three/addons/"}}</script>
   <script type="module" src="js/main.js"></script>
 </head>
 <body>
@@ -32,8 +33,9 @@
 
       <div class="studio" id="studio">
         <div class="studio-mark" id="studio-mark" aria-hidden="true"></div>
-        <svg class="stage" id="stage-floor" aria-hidden="true"></svg>
-        <svg class="stage" id="stage-car" role="img" aria-label="Véhicule sélectionné"></svg>
+        <canvas class="stage-3d" id="stage-3d" role="img" aria-label="Véhicule sélectionné, vue 3D orientable"></canvas>
+        <div class="loader" id="g-loader" aria-hidden="true"><i></i><span>Chargement 3D</span></div>
+        <p class="no-3d-msg">Vue 3D indisponible sur cet appareil (WebGL désactivé).</p>
         <div class="studio-hud">
           <div class="car-title">
             <span class="brand" id="car-brand"></span>
@@ -43,9 +45,8 @@
           <div class="hud-right"><span class="counter" id="car-counter"></span></div>
         </div>
         <div class="badges" id="badges"></div>
-        <div class="hood-callout" id="hood-callout" aria-live="polite"></div>
         <div class="dots" id="dots"></div>
-        <div class="hint" id="hint">‹ glisser pour changer ›</div>
+        <div class="hint" id="hint">↻ glisser pour tourner · pincer pour zoomer</div>
         <div class="audio-warn glass" id="audio-warn">Son indisponible sur ce navigateur</div>
         <button class="restore glass" id="restore" type="button">︿ Commandes</button>
       </div>

@@ -6,6 +6,13 @@ export default {
   mark: 'Z06',
   gen: 'C6 · LS7 7.0 V8 atmo · Stage 3',
   length: 4460,
+  // Modèle 3D (assets/models/selection.json) : matériaux pilotés par l'interface, repérés par leur nom.
+  model: {
+    file: 'assets/models/corvette.glb', rotate: [0, 0, 0],
+    paint: /CarPaint/, glass: /Glass_Window/, rim: /Wheel1A_Material/, caliper: /CalliperGloss/,
+    lamp: /CM_Light_Max/, tail: /LightGlassNormal_Red/,
+    hood: /Hood6/, door: /DoorL_/,
+  },
 
   paints: [
     { name: 'Bordeaux Nacré', hex: '#5c0f1d', finish: 'pearl' },

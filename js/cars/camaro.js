@@ -6,6 +6,12 @@ export default {
   mark: 'ZL1',
   gen: 'Gen 6 · LT4 6.2 V8 Supercharged',
   length: 4783,
+  // Modèle 3D (assets/models/selection.json) : matériaux pilotés par l'interface, repérés par leur nom.
+  model: {
+    file: 'assets/models/camaro.glb', rotate: [0, 0, 0],
+    paint: /camaroPaint/, glass: /camaroWindow/, rim: /wheelsWheel1A/, caliper: /wheelsCaliperLFSG2/,
+    lamp: /camaroLight_/, tail: /RED_GLASS/,
+  },
 
   paints: [
     { name: 'Gris Satin Shadow', hex: '#34373b', finish: 'satin' },

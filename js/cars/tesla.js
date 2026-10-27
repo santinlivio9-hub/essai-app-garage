@@ -6,6 +6,15 @@ export default {
   mark: 'PLAID',
   gen: 'Tri-moteur · 1 020 ch',
   length: 4970,
+  // Modèle 3D (assets/models/selection.json) : un seul matériau d'origine, réparti ici pièce par pièce.
+  model: {
+    file: 'assets/models/tesla.glb', rotate: [0, 90, 0],
+    meshes: {
+      paint: ['Object_2'], glass: ['Object_11', 'Object_16'], rim: ['Object_13', 'Object_14'],
+      lamp: ['Object_3'], tail: ['Object_18'], black: ['Object_23', 'Object_10'],
+    },
+    interior: 'black',
+  },
 
   paints: [
     { name: 'Rouge Signature', hex: '#9c0d16', finish: 'pearl' },

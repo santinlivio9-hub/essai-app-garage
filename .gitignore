@@ -5,3 +5,4 @@ assets/models/mp5-kit*
 
 # Originaux Sketchfab (voir tools/fetch-models.cjs) : seuls les GLB optimisés sont versionnés
 assets/models/src/
+tools/.*.mjs

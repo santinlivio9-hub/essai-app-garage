@@ -6,6 +6,12 @@ export default {
   mark: 'RS3',
   gen: '8Y · 2.5 TFSI quattro',
   length: 4542,
+  // Modèle 3D (assets/models/selection.json) : matériaux pilotés par l'interface, repérés par leur nom.
+  model: {
+    file: 'assets/models/rs3.glb', rotate: [0, 0, 0],
+    paint: /Paint_Material/, glass: /Window_Material/, rim: /Wheel1A_Material/, caliper: /CalliperA_Zon/,
+    lamp: /LightA_Material/, tail: /red_glass/,
+  },
 
   paints: [
     { name: 'Vert Kyalami', hex: '#3e7d3b', finish: 'gloss' },

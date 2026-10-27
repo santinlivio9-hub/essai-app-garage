@@ -12,7 +12,8 @@
   },
   "devDependencies": {
     "@gltf-transform/cli": "^4.5.1",
-    "tailwindcss": "3.4.17"
+    "tailwindcss": "3.4.17",
+    "three": "^0.170.0"
   },
   "type": "module"
 }

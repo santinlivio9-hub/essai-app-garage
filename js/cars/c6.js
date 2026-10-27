@@ -6,6 +6,13 @@ export default {
   mark: 'C6',
   gen: '2012 · V6 3.0 HDi 240 Biturbo',
   length: 4908,
+  // Modèle 3D (assets/models/selection.json) : modèle sans textures, matériaux redéfinis ici.
+  model: {
+    file: 'assets/models/c6.glb', rotate: [0, 90, 0],
+    paint: /^material$/, glass: /material_4/, rim: /^Material$/, tail: /Color_A07/,
+    trim: { '^Color_M08$': 'black', 'DefaultMaterial_0': 'chrome' },
+    hood: /C-bonnet/, door: /C-doors_60/,
+  },
 
   paints: [
     { name: 'Noir Obsidien', hex: '#111215', finish: 'metal' },
