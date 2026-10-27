@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#06070a">
+  <meta name="color-scheme" content="dark">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LS Garage">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="description" content="Livio Santin — Génie Mécanique & Productique. Portfolio d'ingénierie et Garage Studio interactif.">
+  <title>Livio Santin — Portfolio &amp; Garage Studio</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="stylesheet" href="css/app.css">
+  <style>html,body{background:#06070a}</style>
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <div id="app">
+
+    <!-- ============ PROFIL & PROJETS ============ -->
+    <section id="view-profile" class="view" data-view="profile" aria-label="Profil et projets">
+      <div class="scroll" id="profile-root"></div>
+    </section>
+
+    <!-- ============ ATELIER GARAGE ============ -->
+    <section id="view-garage" class="view garage" data-view="garage" aria-label="Atelier Garage">
+      <header class="g-top">
+        <div class="picker" id="car-picker" role="tablist" aria-label="Choix du véhicule"></div>
+      </header>
+
+      <div class="studio" id="studio">
+        <div class="studio-mark" id="studio-mark" aria-hidden="true"></div>
+        <svg class="stage" id="stage-floor" aria-hidden="true"></svg>
+        <svg class="stage" id="stage-car" role="img" aria-label="Véhicule sélectionné"></svg>
+        <div class="studio-hud">
+          <div class="car-title">
+            <span class="brand" id="car-brand"></span>
+            <h2 id="car-name"></h2>
+            <span class="gen" id="car-gen"></span>
+          </div>
+          <div class="hud-right"><span class="counter" id="car-counter"></span></div>
+        </div>
+        <div class="badges" id="badges"></div>
+        <div class="hood-callout" id="hood-callout" aria-live="polite"></div>
+        <div class="dots" id="dots"></div>
+        <div class="hint" id="hint">‹ glisser pour changer ›</div>
+        <div class="audio-warn glass" id="audio-warn">Son indisponible sur ce navigateur</div>
+        <button class="restore glass" id="restore" type="button">︿ Commandes</button>
+      </div>
+
+      <div class="deck" id="deck">
+        <div class="engine-bar">
+          <div class="tach glass" id="tach" aria-label="Compte-tours"></div>
+          <button class="btn-start" id="btn-start" type="button" aria-pressed="false"><span><b>START</b><small>ENGINE</small></span></button>
+          <button class="btn-gas glass" id="btn-gas" type="button" disabled>
+            <span class="fill" id="gas-fill"></span>
+            <span class="lbl"><b>Coup de gaz</b><small>Maintenir · tapoter</small></span>
+            <span class="pedal" aria-hidden="true"></span>
+          </button>
+        </div>
+        <div class="custom">
+          <div class="seg glass" id="seg" role="tablist" aria-label="Personnalisation">
+            <button type="button" role="tab" data-seg="paint">Teinte</button>
+            <button type="button" role="tab" data-seg="finish">Finition</button>
+            <button type="button" role="tab" data-seg="rims">Jantes</button>
+            <button type="button" role="tab" data-seg="glass">Vitres</button>
+            <button type="button" role="tab" data-seg="workshop">Atelier</button>
+          </div>
+          <div class="rail" id="rail"></div>
+        </div>
+      </div>
+      <div class="sheet-space"></div>
+      <div class="tab-space"></div>
+
+      <aside class="sheet" id="sheet" aria-label="Fiche technique">
+        <div class="sheet-head" role="button" tabindex="0" aria-expanded="false">
+          <div class="grip"></div>
+          <div class="row">
+            <h3>Fiche technique</h3>
+            <span class="sum" id="sheet-sum"></span>
+            <span class="chev" aria-hidden="true">︿</span>
+          </div>
+        </div>
+        <div class="sheet-body" id="sheet-body"></div>
+      </aside>
+    </section>
+
+    <nav class="tabbar glass" role="tablist" aria-label="Navigation">
+      <button class="tab" type="button" role="tab" data-tab="profile" aria-selected="false"><span class="ico">📁</span>Profil &amp; Projets</button>
+      <button class="tab" type="button" role="tab" data-tab="garage" aria-selected="false"><span class="ico">🏎️</span>Atelier Garage</button>
+    </nav>
+  </div>
+</body>
+</html>

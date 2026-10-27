@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><link rel="stylesheet" href="../css/app.css">
+<style>body{position:static;overflow:auto;height:auto} .cell{position:relative;width:900px;height:380px;margin:8px;border-radius:20px;overflow:hidden;background:linear-gradient(180deg,#1d2026,#16181c)} .cell svg{position:absolute;inset:0;width:100%;height:100%}</style>
+</head><body><div id="root"></div>
+<script type="module">
+import { CARS } from '../js/cars/index.js';
+import { StageRenderer } from '../js/garage/renderer.js';
+const params = new URLSearchParams(location.search);
+const opts = { lights: params.has('lights'), hood: params.has('hood'), door: params.has('door') };
+const finish = params.get('finish');
+for (const car of CARS.filter(c => c.id === (params.get('car') || 'rs3'))) {
+  const cell = document.createElement('div'); cell.className = 'cell';
+  cell.innerHTML = '<svg class="stage"></svg><svg class="stage" id="stage-car"></svg>';
+  document.getElementById('root').appendChild(cell);
+  const [fl, cs] = cell.querySelectorAll('svg'); cs.removeAttribute('id'); cs.id='stage-car';
+  const r = new StageRenderer(fl, cs);
+  r.fit(900, 380);
+  r.mount(car, { paint: car.paints[0].hex, finish: finish || car.paints[0].finish, tint: 45, lights: opts.lights, hood: opts.hood, door: opts.door, rimStyle: car.rim.style });
+  const rf = (await import('../js/cars/index.js')).RIM_FINISHES.find(x => x.id === car.rim.finish);
+  cell.style.setProperty('--rim', rf.base); cell.style.setProperty('--rim-hi', rf.hi); cell.style.setProperty('--rim-lo', rf.lo); cell.style.setProperty('--caliper', car.rim.caliper);
+  r.setEngine(200);
+}
+document.body.dataset.ready = 1;
+</script></body></html>
