@@ -6,8 +6,9 @@ import glock17 from './glock17.js';
 
 export const WEAPONS = [canik, mp5, hk416, benelli, glock17];
 
-// Cérakote / anodisation (pièces métalliques principales).
+// Cérakote / anodisation (pièces métalliques principales) ; « Origine » garde les textures du modèle.
 export const METAL = [
+  { id: 'orig', name: 'Origine', hex: '#8d939a', orig: true },
   { id: 'black', name: 'Noir', hex: '#1c1d20' },
   { id: 'smoke', name: 'Smoke Grey', hex: '#6b7075' },
   { id: 'ral8000', name: 'RAL 8000', hex: '#8a6f4d' },
@@ -19,6 +20,7 @@ export const METAL = [
 
 // Polymères (carcasse, poignées, crosse).
 export const POLY = [
+  { id: 'orig', name: 'Origine', hex: '#5d6166', orig: true },
   { id: 'black', name: 'Noir', hex: '#151618' },
   { id: 'fde', name: 'FDE', hex: '#8a7458' },
   { id: 'odg', name: 'OD', hex: '#3f4636' },

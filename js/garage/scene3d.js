@@ -97,7 +97,7 @@ export class GarageScene {
     const st = this.stage;
     const ctl = st.controls;
     ctl.minDistance = 3.4;
-    ctl.maxDistance = 10.5;
+    ctl.maxDistance = 12;
     ctl.minPolarAngle = 0.32;
     ctl.maxPolarAngle = 1.5;
     ctl.addEventListener('change', () => this.clampCamera());
@@ -134,7 +134,7 @@ export class GarageScene {
             .replace('#include <begin_vertex>', '#include <begin_vertex>\nvCutPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
           sh.fragmentShader = sh.fragmentShader
             .replace('#include <common>', '#include <common>\nvarying vec3 vCutPos;\nuniform float uCut;')
-            .replace('void main() {', 'void main() {\n  if (vCutPos.y > 0.05 && vCutPos.y < 3.7 && length(vViewPosition) < uCut) discard;');
+            .replace('void main() {', 'void main() {\n  if (vCutPos.y > 0.012 && vCutPos.y < 3.7 && length(vViewPosition) < uCut) discard;');
         };
       });
       st.scene.add(room);
@@ -292,7 +292,7 @@ export class GarageScene {
     const cam = this.stage.camera;
     const v = THREE.MathUtils.degToRad(cam.fov);
     const h = 2 * Math.atan(Math.tan(v / 2) * cam.aspect);
-    return THREE.MathUtils.clamp(2.7 / Math.sin(Math.min(v, h) / 2), 4.2, 10.5);
+    return THREE.MathUtils.clamp(2.7 / Math.sin(Math.min(v, h) / 2), 4.2, 12);
   }
 
   home(i) {

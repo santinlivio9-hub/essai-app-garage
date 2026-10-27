@@ -24,6 +24,10 @@ const list = JSON.parse(fs.readFileSync(path.join(dir, 'selection.json'), 'utf8'
 const budget = { car: 8, scene: 8, weapon: 4, accessory: 4 };
 // Groupes à garder séparés (pièces animables ou à manipuler)
 const MAX_CALLS = 100;
+// Lots dont l'app n'utilise que quelques pièces (matériaux gardés) : le reste et ses textures sont retirés.
+const KEEP = {
+  suppressors: /^(mp5sd|Ti-Rant45|SOCOM)$/,
+};
 const PIVOT = /wheel|door|hood|bonnet|trunk|boot|tailgate|steering|slide|bolt|magazine|trigger|hammer|charging|roue|porti|capot|coffre|volant|culasse|chargeur|gachette|detente/i;
 
 await Promise.all([MeshoptEncoder.ready, MeshoptDecoder.ready]);
@@ -71,6 +75,12 @@ for (const m of list) {
   const dst = path.join(dir, m.id + '.glb');
   if (!fs.existsSync(src)) { console.error(`! ${m.id} : src/${m.id}.glb absent (lancer fetch-models)`); over++; continue; }
   const doc = await io.read(src);
+  if (KEEP[m.id]) {
+    for (const node of doc.getRoot().listNodes()) {
+      const mesh = node.getMesh();
+      if (mesh && !mesh.listPrimitives().some((p) => KEEP[m.id].test(p.getMaterial()?.getName() || ''))) node.dispose();
+    }
+  }
   const calls = drawCalls(doc);
   const merge = calls > MAX_CALLS ? [gather(), prune(), join()] : [join({ keepMeshes: true })];
   await doc.transform(

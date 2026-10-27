@@ -238,15 +238,6 @@ input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.55);
 }
 
-.stage {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-  overflow: visible;
-}
-
 /* Vue 3D (Three.js) : un doigt tourne autour, deux doigts zooment */
 .stage-3d {
   position: absolute;
@@ -405,40 +396,6 @@ input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 }
 
 .badge small { font-size: 9.5px; font-weight: 500; color: var(--ink-3); letter-spacing: 0.04em; }
-
-.hood-callout {
-  position: absolute;
-  z-index: 6;
-  left: 14px;
-  top: 76px;
-  max-width: min(78%, 330px);
-  padding: 9px 11px 10px;
-  border-radius: 14px;
-  background: rgba(8, 18, 24, 0.32);
-  border: 1px solid rgba(127, 227, 255, 0.22);
-  -webkit-backdrop-filter: var(--blur);
-  backdrop-filter: var(--blur);
-  color: var(--ink);
-  opacity: 0;
-  transform: translateY(-6px);
-  pointer-events: none;
-  transition: opacity 0.4s, transform 0.45s var(--ease);
-}
-
-.hood-callout h3 {
-  margin: 0 0 4px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--hud);
-}
-
-.hood-callout ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
-.hood-callout li { font-size: 11px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hood-callout li::before { content: "▸ "; color: var(--hud); }
-
-.garage.is-hood .hood-callout { opacity: 1; transform: none; transition-delay: 0.35s; }
 .garage.is-hood .badges { opacity: 0; transform: translateY(-4px); }
 
 .dots {
@@ -851,99 +808,6 @@ input[type="range"]::-moz-range-thumb { width: 24px; height: 24px; border: 0; bo
 
 .audio-warn.show { opacity: 1; }
 
-/* ---------- Calques SVG du véhicule ---------- */
-
-#stage-car .paint { fill: var(--paint, #3e7d3b); transition: fill 0.18s ease; }
-#stage-car .l-shade { mix-blend-mode: multiply; }
-#stage-car .l-sharp { opacity: var(--f-sharp); transition: opacity 0.4s; }
-#stage-car .l-soft { opacity: var(--f-soft); transition: opacity 0.4s; }
-#stage-car .l-flake { opacity: var(--f-flake); transition: opacity 0.4s; mix-blend-mode: screen; }
-#stage-car .l-pearl { opacity: var(--f-pearl); transition: opacity 0.4s; mix-blend-mode: screen; }
-#stage-car .l-streak { opacity: var(--f-streak); transition: opacity 0.4s; }
-#stage-car .l-rim { opacity: var(--f-rim); transition: opacity 0.4s; }
-#stage-car .sweep { opacity: var(--f-sweep); mix-blend-mode: screen; }
-
-#stage-car { --f-sharp: 1; --f-soft: 0; --f-flake: 0; --f-pearl: 0; --f-streak: 1; --f-rim: 0.9; --f-sweep: 1; }
-#stage-car[data-finish="gloss"] { --f-sharp: 1; --f-soft: 0; --f-flake: 0; --f-pearl: 0; --f-streak: 1; --f-rim: 0.9; --f-sweep: 1; }
-#stage-car[data-finish="metal"] { --f-sharp: 0.85; --f-soft: 0.25; --f-flake: 0.32; --f-pearl: 0; --f-streak: 0.9; --f-rim: 0.85; --f-sweep: 1; }
-#stage-car[data-finish="pearl"] { --f-sharp: 0.85; --f-soft: 0.2; --f-flake: 0.18; --f-pearl: 0.32; --f-streak: 0.9; --f-rim: 0.85; --f-sweep: 1; }
-#stage-car[data-finish="satin"] { --f-sharp: 0.18; --f-soft: 0.85; --f-flake: 0.12; --f-pearl: 0; --f-streak: 0.3; --f-rim: 0.4; --f-sweep: 0.45; }
-#stage-car[data-finish="mat"] { --f-sharp: 0; --f-soft: 1; --f-flake: 0; --f-pearl: 0; --f-streak: 0.06; --f-rim: 0.18; --f-sweep: 0.2; }
-
-#stage-car .flare-sh { fill: none; stroke: #000; stroke-opacity: 0.38; stroke-width: 3; }
-#stage-car .flare-hl { fill: none; stroke: #fff; stroke-opacity: 0.16; stroke-width: 1.6; }
-#stage-car[data-finish="mat"] .flare-hl,
-#stage-car[data-finish="satin"] .flare-hl { stroke-opacity: 0.07; }
-
-#stage-car .ln-gap { fill: none; stroke: #000; stroke-opacity: 0.62; stroke-width: 1.1; }
-#stage-car .ln-gap-hl { fill: none; stroke: #fff; stroke-opacity: 0.08; stroke-width: 0.7; }
-#stage-car .ln-crease-hl { fill: none; stroke: #fff; stroke-opacity: 0.24; stroke-width: 1.1; }
-#stage-car .ln-crease-sh { fill: none; stroke: #000; stroke-opacity: 0.26; stroke-width: 1.6; }
-#stage-car[data-finish="mat"] .ln-crease-hl { stroke-opacity: 0.1; }
-
-#stage-car .tint { opacity: var(--tint, 0.5); transition: opacity 0.12s; }
-#stage-car .interior { opacity: var(--cabin, 0.5); transition: opacity 0.12s; }
-
-#stage-car .wheel .spokes,
-#stage-car .wheel .hub { fill: var(--rim); stroke: var(--rim-hi); stroke-opacity: 0.8; stroke-width: 0.45; transition: fill 0.25s; }
-#stage-car .wheel .nuts circle { fill: var(--rim-lo); }
-#stage-car .wheel .cap { fill: var(--rim-lo); stroke: var(--rim-hi); stroke-opacity: 0.4; stroke-width: 0.5; }
-#stage-car .wheel .lip { stroke: var(--rim-hi); transition: stroke 0.25s; }
-#stage-car .wheel .lip-in { stroke: var(--rim-lo); }
-#stage-car .wheel .caliper { fill: var(--caliper); }
-
-/* Feux */
-#stage-car .proj { fill: #0e1217; stroke: #6f7d8b; stroke-width: 0.6; transition: fill 0.25s; }
-#stage-car .drl-base { fill: none; stroke: #2a3138; stroke-width: 1.8; stroke-linecap: round; }
-#stage-car .drl { fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; opacity: 0; transition: opacity 0.18s; }
-#stage-car .lamp-head { transition: fill 0.3s; }
-#stage-car .lamp-tail { transition: fill 0.3s; }
-#stage-car .fx .beam,
-#stage-car .fx .glow-head,
-#stage-car .fx .glow-tail { opacity: 0; transition: opacity 0.45s; mix-blend-mode: screen; pointer-events: none; }
-#stage-car .flame { opacity: 0; mix-blend-mode: screen; }
-
-#stage-car.drl-on .drl,
-#stage-car.lights-on .drl { opacity: 1; }
-#stage-car.drl-on .lamp-tail { fill: #c81c1c; }
-#stage-car.lights-on .proj { fill: #f2f7ff; }
-#stage-car.lights-on .lamp-head { fill: #cfe0f2; }
-#stage-car.lights-on .lamp-tail { fill: #ff2b2b; }
-#stage-car.lights-on .lamp-marker { fill: #ffb020; }
-#stage-car.lights-on .fx .beam,
-#stage-car.lights-on .fx .glow-head,
-#stage-car.lights-on .fx .glow-tail { opacity: 1; transition-delay: 0.32s; }
-
-/* Capot & portière */
-#stage-car .hood,
-#stage-car .bay-gap,
-#stage-car .door,
-#stage-car .door-ap { opacity: 0; }
-#stage-car.hood-moving .hood,
-#stage-car.hood-moving .bay-gap { opacity: 1; }
-#stage-car.door-moving .door,
-#stage-car.door-moving .door-ap { opacity: 1; }
-#stage-car .hood-under { opacity: 0; transition: opacity 0.4s; }
-#stage-car.hood-open .hood-under { opacity: 1; }
-
-/* Rayons X baie moteur */
-#stage-car .xray { opacity: 0; transition: opacity 0.5s; pointer-events: none; }
-#stage-car.hood-open .xray { opacity: 1; transition-delay: 0.45s; }
-#stage-car .x-veil { fill: rgba(3, 14, 20, 0.34); stroke: rgba(127, 227, 255, 0.18); stroke-width: 0.6; }
-#stage-car .x-corner { fill: none; stroke: var(--hud); stroke-width: 1.4; }
-#stage-car .x-line { fill: rgba(127, 227, 255, 0.05); stroke: var(--hud); stroke-width: 0.8; }
-#stage-car .x-faint { opacity: 0.5; fill: none; }
-#stage-car .x-fill { fill: rgba(127, 227, 255, 0.16); stroke: var(--hud); stroke-width: 0.6; }
-#stage-car .x-piston { fill: rgba(127, 227, 255, 0.4); stroke: var(--hud); stroke-width: 0.6; }
-#stage-car .x-rod { stroke: var(--hud); stroke-width: 1; stroke-opacity: 0.75; }
-#stage-car .x-inj { stroke: #ffcf6a; stroke-width: 1.2; stroke-dasharray: 2 1.5; }
-#stage-car .x-hv { fill: none; stroke: #ff8a2a; stroke-width: 1.6; stroke-linecap: round; }
-#stage-car .x-txt { font: 600 6.5px var(--mono); fill: var(--hud); letter-spacing: 0.08em; }
-#stage-car .x-scan { fill: rgba(127, 227, 255, 0.35); }
-#stage-car.hood-open .x-scan { animation: scan 2.4s ease-in-out infinite; }
-
-@keyframes scan { 0%, 100% { transform: translateY(0); opacity: 0; } 10% { opacity: 1; } 50% { transform: translateY(var(--scan-h, 90px)); opacity: 0.8; } 60% { opacity: 0; } }
-
 /* ==========================================================================
    PROFIL & PROJETS
    ========================================================================== */
@@ -1154,7 +1018,7 @@ input[type="range"]::-moz-range-thumb { width: 24px; height: 24px; border: 0; bo
     grid-template-rows: auto minmax(0, 1fr) auto auto;
   }
   .g-top { grid-column: 1; grid-row: 1; min-width: 0; }
-  .badges, .hood-callout ul, .hint { display: none; }
+  .badges, .hint { display: none; }
   .car-title .gen { display: none; }
   .studio { grid-column: 1; grid-row: 2 / 5; margin-bottom: calc(var(--tab-space)); }
   .deck { grid-column: 2; grid-row: 1 / 3; max-height: none; padding-top: 8px; }
@@ -1223,45 +1087,8 @@ input[type="range"]::-moz-range-thumb { width: 24px; height: 24px; border: 0; bo
 }
 
 .studio-armory .studio-mark { top: 52%; }
-#stage-arm { z-index: 1; will-change: transform, opacity; }
 
 /* matériaux des armes */
-#stage-arm .m-metal { fill: var(--w-metal, #1c1d20); }
-#stage-arm .m-poly { fill: var(--w-poly, #151618); }
-#stage-arm .m-pad { fill: var(--w-pad, #b9bec4); }
-#stage-arm .m-steel { fill: url(#w-steel); }
-#stage-arm .m-black,
-#stage-arm .m-optic,
-#stage-arm .m-rail { fill: #121316; }
-#stage-arm .m-tan { fill: #6b604c; }
-#stage-arm .m-rubber { fill: #19191b; }
-#stage-arm .m-dark { fill: #040405; }
-#stage-arm .m-glass { fill: url(#w-glass); }
-#stage-arm .m-brass { fill: url(#w-brass); }
-#stage-arm .m-fiber { fill: #45ff6e; }
-#stage-arm .m-stipple { fill: url(#w-stipple); }
-#stage-arm .m-pict { fill: #e9e9e9; }
-#stage-arm .m-pictRed { fill: #d0201b; }
-#stage-arm .m-shade { fill: url(#w-shade); pointer-events: none; }
-#stage-arm .m-metal,
-#stage-arm .m-poly,
-#stage-arm .m-steel,
-#stage-arm .m-black,
-#stage-arm .m-optic,
-#stage-arm .m-tan,
-#stage-arm .m-rubber,
-#stage-arm .m-pad { stroke: rgba(0, 0, 0, 0.7); stroke-width: 0.5; transition: fill 0.2s; }
-#stage-arm .m-line { fill: none; stroke: rgba(0, 0, 0, 0.6); stroke-width: 0.6; }
-#stage-arm .m-hl { fill: none; stroke: rgba(255, 255, 255, 0.16); stroke-width: 0.6; }
-#stage-arm .led { fill: #ff3b30; }
-#stage-arm .beam,
-#stage-arm .laser-vis,
-#stage-arm .laser-ir { opacity: 0; transition: opacity 0.25s; mix-blend-mode: screen; }
-#stage-arm.light-on .beam,
-#stage-arm.laser-vis-on .laser-vis,
-#stage-arm.laser-ir-on .laser-ir { opacity: 1; }
-#stage-arm .flash,
-#stage-arm .jets { mix-blend-mode: screen; }
 
 /* barre d'action */
 .target { position: relative; height: 74px; border-radius: 18px; overflow: hidden; cursor: pointer; }

@@ -96,7 +96,9 @@
 
       <div class="studio studio-armory" id="a-studio">
         <div class="studio-mark" id="a-mark" aria-hidden="true"></div>
-        <svg class="stage" id="stage-arm" role="img" aria-label="Arme sélectionnée"></svg>
+        <canvas class="stage-3d" id="stage-arm" role="img" aria-label="Arme sélectionnée, vue 3D orientable"></canvas>
+        <div class="loader" id="a-loader" aria-hidden="true"><i></i><span>Chargement 3D</span></div>
+        <p class="no-3d-msg">Vue 3D indisponible sur cet appareil (WebGL désactivé).</p>
         <div class="studio-hud">
           <div class="car-title">
             <span class="brand" id="a-maker"></span>

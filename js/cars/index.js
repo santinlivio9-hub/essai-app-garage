@@ -14,14 +14,7 @@ export const FINISHES = [
   { id: 'mat', name: 'Mat' },
 ];
 
-export const RIM_STYLES = [
-  { id: 'rs', name: 'RS 5×2' },
-  { id: 'track', name: 'Track' },
-  { id: 'forged', name: 'Forgée 10' },
-  { id: 'classic', name: 'Classique Y' },
-  { id: 'arachnid', name: 'Arachnid' },
-];
-
+// Finitions de jantes (les jantes elles-mêmes sont celles du modèle 3D).
 export const RIM_FINISHES = [
   { id: 'silver', name: 'Argent', base: '#c4c9ce', hi: '#f3f5f7', lo: '#6a7077' },
   { id: 'gunmetal', name: 'Gunmetal', base: '#565b62', hi: '#9aa1a9', lo: '#26292d' },

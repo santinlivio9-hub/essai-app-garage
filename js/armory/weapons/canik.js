@@ -1,5 +1,4 @@
-// Canik TTI Combat (Smoke) — profil gauche, millimètres réels.
-import { picatinny, serrations, rect } from '../shapes.js';
+// Canik TTI Combat (Smoke) — données, modèle 3D, points de montage (mm, depuis la bouche) et profil sonore.
 
 export default {
   id: 'canik',
@@ -8,6 +7,14 @@ export default {
   short: 'TTI Combat',
   mark: 'TTI',
   type: 'pistol',
+  // Modèle 3D (Canik Rival S, assets/models/selection.json) : pièces repérées par leur nom.
+  model: {
+    file: 'assets/models/canik.glb', rotate: [0, 180, 0],
+    remove: /low001_mag|mag002/, // chargeurs posés à côté de l'arme
+    slide: /_slide_low_0$/, mag: /mag001_mag|follower_low_mag|BezierCircle_low_mag|mag_exten/, magExt: /mag_exten/,
+    optic: /optic_low|opt_plate|opt_mount/, // red dot d'origine, affiché avec l'option « Red dot »
+    metal: /slide_low|comp_low/, poly: /frame_low/,
+  },
   variant: 'Cérakote Smoke · compensateur intégré',
   specs: {
     caliber: '9×19 mm Parabellum', action: 'Culasse calée · percuteur lancé',
@@ -29,28 +36,4 @@ export default {
     pivot: { x: 25, y: 50 },
     magAxis: [-0.3, -1],
   },
-  parts: [
-    { k: 'poly', d: 'M 4 107 L 180 107 L 180 101 C 180 96 177 94 172 94 L 130 94 C 127 94 126 93 125 91 C 123 83 122 76 119 72 C 117 69 113 68 108 68 L 90 68 C 86 68 84 70 82 73 L 78 82 C 74 60 67 32 64 14 L -26 14 C -22 40 -14 70 -8 90 C -15 93 -17 99 -13 103 C -9 106 -2 107 4 107 Z' },
-    { k: 'stipple', d: 'M -18 24 L 58 24 C 62 44 68 64 74 80 L -6 88 C -10 64 -14 44 -18 24 Z' },
-    { k: 'dark', d: 'M 90 91 C 88 91 87 89 87 87 L 89 76 C 90 74 92 73 95 73 L 108 73 C 112 73 114 75 115 79 L 117 88 C 117 90 116 91 114 91 Z' },
-    { k: 'poly', d: picatinny(128, 176, 94, -1, 5) },
-    { k: 'metal', d: 'M -31 14 L 66 14 L 67 4 L -32 4 Z' },
-    { k: 'line', d: 'M -30 9 L 66 9' },
-    { k: 'steel', d: 'M 101 91 L 101 77 L 105 77 L 105 91 Z' },
-    { k: 'steel', d: 'M 54 103.5 L 84 103.5 L 86 106.5 L 56 107 Z' },
-    { k: 'metal', d: rect(76, 83, 85, 91, 1) },
-    { k: 'line', d: 'M 0 103 L 178 103' },
-    { g: 'slide', k: 'metal', d: 'M 2 107 L 194 107 C 197 107 199 109 199 112 L 199 129 L 196 134 L 190 134 L 189 131 L 186 131 L 185 134 L 180 134 L 179 131 L 176 131 L 175 135 L 6 136 C 3 136 1 135 0 133 L 0 111 C 0 109 0.5 107 2 107 Z' },
-    { g: 'slide', k: 'steel', d: rect(120, 123, 172, 133) },
-    { g: 'slide', k: 'dark', d: rect(121, 124, 146, 132.5, 1.5) + ' ' + rect(150, 124, 171, 132.5, 1.5) },
-    { g: 'slide', k: 'steel', d: rect(122, 126, 170, 130, 2) },
-    { g: 'slide', k: 'line', d: serrations(6, 36, 110, 133, 3.2, 3) + serrations(98, 116, 110, 121, 3.2, 3) },
-    { g: 'slide', k: 'hl', d: 'M 100 107.5 L 116 120 L 197 120 M 4 134.5 L 174 134.5' },
-    { g: 'slide', k: 'black', d: 'M 8 136 L 8 143 L 20 143 L 20 136 Z M 166 135 L 166 141 L 173 141 L 173 135 Z' },
-    { g: 'slide', k: 'fiber', d: rect(168, 137.5, 171, 140.5, 1.5) },
-    { g: 'mosplate', k: 'black', d: rect(28, 135.5, 64, 138.5, 0.8) },
-    { g: 'mag', k: 'black', d: 'M -31 4 L 66 4 L 66 -2 L -31 -2 Z' },
-    { g: 'magExt', k: 'pad', d: 'M -31 4 L 66 4 L 66 -22 C 66 -24 64 -26 62 -26 L -27 -26 C -30 -26 -31 -24 -31 -22 Z' },
-    { g: 'magExt', k: 'line', d: 'M -28 -6 L 63 -6 M -28 -12 L 63 -12 M -28 -18 L 63 -18' },
-  ],
 };

@@ -22,6 +22,24 @@ export function loadModel(url) {
   return cache.get(url);
 }
 
+// Libère un modèle du cache et de la mémoire GPU (une seule arme gardée à la fois sur iPhone).
+export function unloadModel(url) {
+  const p = cache.get(url);
+  cache.delete(url);
+  if (p) p.then(disposeObject, () => {});
+}
+
+export function disposeObject(obj) {
+  obj.traverse((m) => {
+    if (!m.isMesh) return;
+    m.geometry.dispose();
+    for (const mat of [].concat(m.material)) {
+      for (const k in mat) if (mat[k] && mat[k].isTexture) mat[k].dispose();
+      mat.dispose();
+    }
+  });
+}
+
 export const ease = {
   out3: (k) => 1 - Math.pow(1 - k, 3),
   inOut3: (k) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2),
