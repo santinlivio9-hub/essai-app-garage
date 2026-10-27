@@ -1,10 +1,11 @@
 // Contrôleur de l'Armurerie : configuration modulaire, banc de tir, rechargement, audio.
 import { WEAPONS, METAL, POLY, PADS, MODE_LABEL } from './weapons/index.js';
 import { CATALOG } from './accessories.js';
-import { ArmRenderer } from './renderer.js';
+import { ArmoryScene } from './scene3d.js';
 import { GunAudio } from './gun-audio.js';
 import { Target } from './target.js';
 import { Sheet } from '../core/sheet.js';
+import { creditHTML, creditsReady } from '../core/credits.js';
 import { $, esc, load, save, tween, ease } from '../core/util.js';
 
 const STORE = 'ls-armory-v1';
@@ -59,7 +60,9 @@ export class Armory {
     this.cfg = {};
     for (const w of WEAPONS) this.cfg[w.id] = { ...defaults(w), ...(saved.cfg && saved.cfg[w.id]) };
     this.studio = $('#a-studio', root);
-    this.renderer = new ArmRenderer($('#stage-arm', root));
+    this.renderer = new ArmoryScene($('#stage-arm', root));
+    if (!this.renderer.ok) this.studio.classList.add('no-3d');
+    this.loader = $('#a-loader', root);
     this.audio = new GunAudio();
     this.target = new Target($('#a-target', root));
     this.sheet = new Sheet($('#a-sheet', root), { onDismiss: () => this.setVitrine(true) });
@@ -77,6 +80,7 @@ export class Armory {
     this.bind();
     this.observe();
     this.mount(true);
+    creditsReady.then(() => this.renderSheet());
     this.last = performance.now();
     this.loop = this.loop.bind(this);
     requestAnimationFrame(this.loop);
@@ -96,6 +100,7 @@ export class Armory {
 
   setActive(on) {
     this.active = on;
+    this.renderer.setActive(on);
     if (on) this.fit();
     else this.trigger = false;
   }
@@ -110,8 +115,15 @@ export class Armory {
     this.ammo = this.capacity();
     this.chambered = true;
     this.reloading = false;
-    this.renderer.build(w, c, { instant: first });
-    this.renderer.lockSlide(false);
+    // le modèle 3D arrive de façon asynchrone : indicateur pendant le chargement
+    this.loader.classList.add('show');
+    const idx = this.idx;
+    this.renderer.build(w, c).then(() => {
+      if (idx !== this.idx) return;
+      this.loader.classList.remove('show');
+      this.renderer.lockSlide(false);
+      this.renderSheet();
+    }, () => this.loader.classList.remove('show'));
     this.target.clear();
     this.target.setRange(RANGE[w.type]);
     const seg = SEGS.find(([k]) => k === this.seg);
@@ -124,7 +136,7 @@ export class Armory {
   }
 
   rebuild() {
-    this.renderer.build(this.w, this.c);
+    this.renderer.build(this.w, this.c).then(() => this.renderSheet());
     this.updateTexts();
     this.persist();
   }
@@ -212,7 +224,20 @@ export class Armory {
     ? (w.specs.v0SD && c.muzzle === 'sd' ? 'Modérateur intégral et munition subsonique : pas de claquement supersonique, détonation sourde, la mécanique de culasse devient le bruit dominant.' : w.sound.crack ? 'Silencieux : souffle de bouche fortement atténué, mais le projectile reste supersonique — le « claquement » balistique subsiste.' : 'Silencieux : détonation sourde et étouffée (« thwip » des gaz ralentis) ; on entend nettement le claquement sec de la culasse.')
     : c.muzzle === 'comp' || c.muzzle === 'comp-int' ? 'Compensateur : les gaz déviés vers le haut réduisent le relèvement mais rendent la détonation plus sèche et plus forte pour le tireur.' : 'Configuration d’origine : attaque très brève, résonance métallique de la culasse et queue d’écho du stand.'}</p>
       <h4>Accessoires montés</h4>${acc.length ? `<ul>${acc.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p>Aucun — configuration d’origine.</p>'}
-      <h4>Banc de tir</h4><p>Sélecteur ${w.modes.map((m) => MODE_LABEL[m]).join(' / ')}. Touchez la cible pour l’effacer. Simulation visuelle et sonore à vocation ludique et pédagogique.</p>`;
+      <h4>Banc de tir</h4><p>Sélecteur ${w.modes.map((m) => MODE_LABEL[m]).join(' / ')}. Touchez la cible pour l’effacer. Simulation visuelle et sonore à vocation ludique et pédagogique.</p>
+      <h4>Modèles 3D</h4><ul class="credits">${creditHTML([w.id, ...this.accIds()])}</ul>`;
+  }
+
+  // Identifiants (selection.json) des accessoires 3D montés, pour les crédits.
+  accIds() {
+    const c = this.c;
+    const ids = [];
+    if (c.optic === 'holo') ids.push('eotech');
+    if ((c.optic === 'rds' && this.w.id !== 'canik') || (c.optic === 'holo' && c.magnifier)) ids.push('reddots');
+    if (c.laser === 'peq') ids.push('peq15');
+    if (c.muzzle === 'sup' || c.muzzle === 'sd') ids.push('suppressors');
+    if (c.grip === 'angled') ids.push('afg');
+    return [...new Set(ids)];
   }
 
   // ---------- sélecteur d'arme ----------
@@ -316,11 +341,7 @@ export class Armory {
   }
 
   applyColors() {
-    const c = this.c;
-    const st = $('#stage-arm', this.root).style;
-    st.setProperty('--w-metal', (METAL.find((m) => m.id === c.metal) || METAL[0]).hex);
-    st.setProperty('--w-poly', (POLY.find((p) => p.id === c.poly) || POLY[0]).hex);
-    st.setProperty('--w-pad', (PADS.find((p) => p.id === c.pad) || PADS[0]).hex);
+    this.renderer.colors(this.c);
   }
 
   onRail(e) {
@@ -399,24 +420,7 @@ export class Armory {
     this.btnReload.addEventListener('click', () => { this.audio.unlock(); this.reload(); });
     this.btnMode.addEventListener('click', () => { this.audio.unlock(); this.cycleMode(); });
 
-    // balayage horizontal du studio : arme suivante / précédente
-    let x0 = 0;
-    let y0 = 0;
-    let id = null;
-    this.studio.addEventListener('pointerdown', (e) => {
-      if (e.target.closest('button')) return;
-      id = e.pointerId; x0 = e.clientX; y0 = e.clientY;
-    });
-    this.studio.addEventListener('pointerup', (e) => {
-      if (e.pointerId !== id) return;
-      id = null;
-      const dx = e.clientX - x0;
-      const dy = e.clientY - y0;
-      if (Math.abs(dx) > 44 && Math.abs(dx) > Math.abs(dy) * 1.3) {
-        const dir = dx < 0 ? 1 : -1;
-        this.go((this.idx + dir + WEAPONS.length) % WEAPONS.length, dir);
-      } else if (dy < -40 && this.root.classList.contains('vitrine')) this.setVitrine(false);
-    });
+    // le studio sert à tourner autour de l'arme (un doigt) et à zoomer (deux doigts)
   }
 
   cycleMode() {
