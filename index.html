@@ -10,8 +10,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="LS Studio">
   <meta name="format-detection" content="telephone=no">
-  <meta name="description" content="Livio Santin — Génie Mécanique & Productique. Portfolio d'ingénierie, Garage Studio et Armurerie tactique interactifs.">
-  <title>Livio Santin — Ingénierie · Garage · Armurerie</title>
+  <meta name="description" content="Garage Studio et Armurerie tactique interactifs.">
+  <title>LS Studio — Garage · Armurerie</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
@@ -23,12 +23,8 @@
 <body>
   <div id="app">
 
-    <!-- ================= 1 · PROFIL & INGÉNIERIE ================= -->
-    <section id="view-profile" class="view" data-view="profile" aria-label="Profil et ingénierie">
-      <div class="scroll" id="profile-root"></div>
-    </section>
 
-    <!-- ================= 2 · ATELIER GARAGE ================= -->
+    <!-- ================= 1 · ATELIER GARAGE ================= -->
     <section id="view-garage" class="view garage" data-view="garage" aria-label="Atelier Garage">
       <header class="g-top">
         <div class="picker" id="car-picker" role="tablist" aria-label="Choix du véhicule"></div>
@@ -91,7 +87,7 @@
       </aside>
     </section>
 
-    <!-- ================= 3 · ARMURERIE TACTIQUE ================= -->
+    <!-- ================= 2 · ARMURERIE TACTIQUE ================= -->
     <section id="view-armory" class="view armory" data-view="armory" aria-label="Armurerie tactique">
       <header class="g-top">
         <div class="picker" id="a-picker" role="tablist" aria-label="Choix de l'arme"></div>
@@ -151,10 +147,6 @@
 
     <!-- ================= Navigation ================= -->
     <nav class="tabbar glass" role="tablist" aria-label="Navigation">
-      <button class="tab" type="button" role="tab" data-tab="profile" aria-selected="false">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="2.4"/><path d="M12 9.6v1M12 15.4v1M8.6 13h1M14.4 13h1"/></svg>
-        <span>Ingénierie</span>
-      </button>
       <button class="tab" type="button" role="tab" data-tab="garage" aria-selected="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16v-3l2.5-5h11L20 13v3z"/><path d="M3 13h17"/><circle cx="7" cy="16.5" r="2"/><circle cx="16.5" cy="16.5" r="2"/></svg>
         <span>Garage</span>

@@ -1,6 +1,6 @@
 // Service worker : précache de l'application pour un fonctionnement hors-ligne.
 // Incrémentez VERSION à chaque déploiement pour forcer la mise à jour.
-const VERSION = 'ls-studio-v2';
+const VERSION = 'ls-studio-v3';
 const ASSETS = [
   './',
   'index.html',
@@ -37,8 +37,6 @@ const ASSETS = [
   'js/garage/wheels.js',
   'js/garage/xray.js',
   'js/main.js',
-  'js/profile/data.js',
-  'js/profile/profile.js',
   'icons/icon.svg',
   'icons/icon-180.png',
   'icons/icon-192.png',

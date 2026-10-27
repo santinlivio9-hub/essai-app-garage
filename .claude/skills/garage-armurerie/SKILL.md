@@ -6,8 +6,8 @@ description: Règles du projet « LS Studio » (PWA iPhone Garage + Armurerie) �
 # Projet LS Studio — Garage & Armurerie
 
 PWA mobile (Safari iOS d'abord) en HTML / Tailwind compilé / JavaScript vanilla (modules ES). Déployée sur
-GitHub Pages depuis la branche de travail. L'onglet Ingénierie/Profil est **à retirer** : l'app ne garde que
-**Garage** et **Armurerie**.
+GitHub Pages depuis la branche de travail. L'app comporte deux onglets : **Garage** et **Armurerie** (l'onglet Profil a été retiré).
+Modèles 3D retenus : `assets/models/selection.json` ; crédits obligatoires : `assets/models/CREDITS.md`.
 
 ## Règles d'interface (non négociables)
 
