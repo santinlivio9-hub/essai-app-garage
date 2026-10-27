@@ -1,1 +1,4 @@
 node_modules/
+
+# Modèles sous licence Standard Sketchfab : ne pas publier tant que le dépôt est public
+assets/models/mp5-kit*
