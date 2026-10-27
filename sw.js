@@ -1,0 +1,85 @@
+// Service worker : précache de l'application pour un fonctionnement hors-ligne.
+// Incrémentez VERSION à chaque déploiement pour forcer la mise à jour.
+const VERSION = 'ls-studio-v2';
+const ASSETS = [
+  './',
+  'index.html',
+  'manifest.webmanifest',
+  'css/tailwind.css',
+  'css/app.css',
+  'js/armory/accessories.js',
+  'js/armory/armory.js',
+  'js/armory/gun-audio.js',
+  'js/armory/renderer.js',
+  'js/armory/shapes.js',
+  'js/armory/target.js',
+  'js/armory/weapons/benelli.js',
+  'js/armory/weapons/canik.js',
+  'js/armory/weapons/glock17.js',
+  'js/armory/weapons/hk416.js',
+  'js/armory/weapons/index.js',
+  'js/armory/weapons/mp5.js',
+  'js/audio/engine-audio.js',
+  'js/audio/engine-dsp.js',
+  'js/audio/engine-sim.js',
+  'js/cars/c6.js',
+  'js/cars/camaro.js',
+  'js/cars/corvette.js',
+  'js/cars/index.js',
+  'js/cars/rs3.js',
+  'js/cars/tesla.js',
+  'js/core/audio.js',
+  'js/core/sheet.js',
+  'js/core/util.js',
+  'js/garage/garage.js',
+  'js/garage/renderer.js',
+  'js/garage/tach.js',
+  'js/garage/wheels.js',
+  'js/garage/xray.js',
+  'js/main.js',
+  'js/profile/data.js',
+  'js/profile/profile.js',
+  'icons/icon.svg',
+  'icons/icon-180.png',
+  'icons/icon-192.png',
+  'icons/icon-512.png',
+];
+
+self.addEventListener('install', (e) => {
+  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+});
+
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim()),
+  );
+});
+
+// Réseau d'abord pour la page (mises à jour rapides), cache d'abord pour le reste.
+self.addEventListener('fetch', (e) => {
+  const req = e.request;
+  if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
+  if (req.mode === 'navigate') {
+    e.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(VERSION).then((c) => c.put('index.html', copy));
+          return res;
+        })
+        .catch(() => caches.match('index.html')),
+    );
+    return;
+  }
+  e.respondWith(
+    caches.match(req).then((hit) => hit || fetch(req).then((res) => {
+      if (res.ok) {
+        const copy = res.clone();
+        caches.open(VERSION).then((c) => c.put(req, copy));
+      }
+      return res;
+    })),
+  );
+});

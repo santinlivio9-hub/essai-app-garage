@@ -1,0 +1,15 @@
+{
+  "name": "ls-studio",
+  "private": true,
+  "description": "Livio Santin — Portfolio d'ingénierie, Garage Studio et Armurerie tactique (PWA).",
+  "scripts": {
+    "build:css": "tailwindcss -c tailwind.config.cjs -i css/tailwind.src.css -o css/tailwind.css --minify",
+    "watch:css": "tailwindcss -c tailwind.config.cjs -i css/tailwind.src.css -o css/tailwind.css --watch",
+    "serve": "python3 -m http.server 8000",
+    "test:audio": "node tools/audio-test.mjs && node tools/gun-audio-test.mjs"
+  },
+  "devDependencies": {
+    "tailwindcss": "3.4.17"
+  },
+  "type": "module"
+}
