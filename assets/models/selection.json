@@ -1,0 +1,155 @@
+[
+  {
+    "kind": "car",
+    "id": "rs3",
+    "uid": "baeb16a9d4234577a0a2ebea8a9e380e",
+    "name": "2023 Audi RS3 Sedan performance",
+    "author": "Ddiaz Design",
+    "license": "CC Attribution-NonCommercial-ShareAlike",
+    "url": "https://sketchfab.com/3d-models/2023-audi-rs3-sedan-performance-baeb16a9d4234577a0a2ebea8a9e380e"
+  },
+  {
+    "kind": "car",
+    "id": "corvette",
+    "uid": "a0a8832577594c13b8626fa9069885d2",
+    "name": "2013 Chevrolet Corvette Z06",
+    "author": "Ddiaz Design",
+    "license": "CC Attribution",
+    "url": "https://sketchfab.com/3d-models/2013-chevrolet-corvette-z06-a0a8832577594c13b8626fa9069885d2"
+  },
+  {
+    "kind": "car",
+    "id": "camaro",
+    "uid": "c57c5b0ff3e347c5aa40795a23e22187",
+    "name": "2017 Chevrolet Camaro ZL1",
+    "author": "Ddiaz Design",
+    "license": "CC Attribution",
+    "url": "https://sketchfab.com/3d-models/2017-chevrolet-camaro-zl1-c57c5b0ff3e347c5aa40795a23e22187"
+  },
+  {
+    "kind": "car",
+    "id": "c6",
+    "uid": "bc19223673764bdf816911c8c983e124",
+    "name": "Citroen C6",
+    "author": "Nieve5677",
+    "license": "CC Attribution",
+    "url": "https://sketchfab.com/3d-models/citroen-c6-bc19223673764bdf816911c8c983e124"
+  },
+  {
+    "kind": "car",
+    "id": "tesla",
+    "uid": "9de8855fae324e6cbbb83c9b5288c961",
+    "name": "Tesla Model S Plaid",
+    "author": "Valentun",
+    "license": "CC Attribution",
+    "url": "https://sketchfab.com/3d-models/tesla-model-s-plaid-9de8855fae324e6cbbb83c9b5288c961"
+  },
+  {
+    "kind": "scene",
+    "id": "showroom",
+    "uid": "5dca77c363d449409d878782e3da369f",
+    "name": "Metallic Showroom Gallery",
+    "author": "jimbogies",
+    "license": "CC Attribution",
+    "url": "https://sketchfab.com/3d-models/metallic-showroom-gallery-5dca77c363d449409d878782e3da369f"
+  },
+  {
+    "kind": "weapon",
+    "id": "canik",
+    "uid": "a7349a89226043adb9720a90ede7c5b5",
+    "name": "CANIK RIVAL S",
+    "author": "Cam Diep Minh",
+    "license": "CC Attribution",
+    "url": "https://sketchfab.com/3d-models/canik-rival-s-a7349a89226043adb9720a90ede7c5b5"
+  },
+  {
+    "kind": "weapon",
+    "id": "mp5",
+    "uid": "fad0226e1dcf4af180f707a5509d3a4e",
+    "name": "HK MP5 SMG",
+    "author": "Daniel Zamary",
+    "license": "CC Attribution",
+    "url": "https://sketchfab.com/3d-models/hk-mp5-smg-fad0226e1dcf4af180f707a5509d3a4e"
+  },
+  {
+    "kind": "weapon",
+    "id": "mp5-kit",
+    "uid": "d381a0438a8b45c2bac6f59120fbb52f",
+    "name": "Free Modular MP5 Kit",
+    "author": "Karnaval",
+    "license": "Free Standard",
+    "url": "https://sketchfab.com/3d-models/free-modular-mp5-kit-d381a0438a8b45c2bac6f59120fbb52f"
+  },
+  {
+    "kind": "weapon",
+    "id": "hk416",
+    "uid": "a16768f0ffa24737a4fe324a411cfbd9",
+    "name": "HK 416 A7 (free download)",
+    "author": "r4m",
+    "license": "CC Attribution",
+    "url": "https://sketchfab.com/3d-models/hk-416-a7-free-download-a16768f0ffa24737a4fe324a411cfbd9"
+  },
+  {
+    "kind": "weapon",
+    "id": "benelli",
+    "uid": "7e472e24152246708cac8b6f1613c7a8",
+    "name": "M4 Super 90 (JW2) Brand-Friendly version",
+    "author": "8sianDude",
+    "license": "CC Attribution",
+    "url": "https://sketchfab.com/3d-models/m4-super-90-jw2-brand-friendly-version-7e472e24152246708cac8b6f1613c7a8"
+  },
+  {
+    "kind": "weapon",
+    "id": "glock17",
+    "uid": "2f9267d1717a476cac58e294eea4382a",
+    "name": "Semi-Automatic Pistol Glock FAN ART",
+    "author": "Nez1x75",
+    "license": "CC Attribution",
+    "url": "https://sketchfab.com/3d-models/semi-automatic-pistol-glock-fan-art-2f9267d1717a476cac58e294eea4382a"
+  },
+  {
+    "kind": "accessory",
+    "id": "eotech",
+    "uid": "45e4fcdfb1b34756ab9e866564a12f66",
+    "name": "EoTech EXPS3-0 Holographic Weapon Sight Lowpoly",
+    "author": "valterjherson1",
+    "license": "CC Attribution",
+    "url": "https://sketchfab.com/3d-models/eotech-exps3-0-holographic-weapon-sight-lowpoly-45e4fcdfb1b34756ab9e866564a12f66"
+  },
+  {
+    "kind": "accessory",
+    "id": "reddots",
+    "uid": "288373d26dd84db2898920222ac3e430",
+    "name": "low-poly Collimator Set",
+    "author": "D_U",
+    "license": "CC Attribution",
+    "url": "https://sketchfab.com/3d-models/low-poly-collimator-set-288373d26dd84db2898920222ac3e430"
+  },
+  {
+    "kind": "accessory",
+    "id": "peq15",
+    "uid": "10297c09417949e8ac10ea6ededee68b",
+    "name": "PEQ-15",
+    "author": "Tuong Truong",
+    "license": "CC Attribution",
+    "url": "https://sketchfab.com/3d-models/peq-15-10297c09417949e8ac10ea6ededee68b"
+  },
+  {
+    "kind": "accessory",
+    "id": "suppressors",
+    "uid": "3a3c123f94a446589873b1d4df53c83c",
+    "name": "Suppressors 10 Pack",
+    "author": "The WarVet",
+    "license": "CC Attribution",
+    "url": "https://sketchfab.com/3d-models/suppressors-10-pack-3a3c123f94a446589873b1d4df53c83c"
+  },
+  {
+    "kind": "accessory",
+    "id": "afg",
+    "uid": "a92a52cbb5854f7c8e33507f579073f7",
+    "name": "Low-Poly Magpul AFG",
+    "author": "notcplkerry",
+    "license": "CC Attribution",
+    "url": "https://sketchfab.com/3d-models/low-poly-magpul-afg-a92a52cbb5854f7c8e33507f579073f7"
+  }
+]

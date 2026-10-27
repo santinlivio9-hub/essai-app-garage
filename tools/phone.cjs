@@ -8,9 +8,9 @@ const { chromium, devices } = require('playwright');
   const logs = [];
   p.on('console', (m) => { if (m.type() !== 'log') logs.push(m.type() + ': ' + m.text()); });
   p.on('pageerror', (e) => logs.push('pageerror: ' + e.message));
-  await p.goto('http://localhost:8765/index.html#profile');
+  await p.goto('http://localhost:8765/index.html#garage');
   await p.evaluate(() => localStorage.clear());
-  await p.goto('http://localhost:8765/index.html#profile');
+  await p.goto('http://localhost:8765/index.html#garage');
   await p.waitForTimeout(800);
   const shot = (n) => p.screenshot({ path: `${out}/${scenario}-${n}.png` });
   if (scenario === 'basic') {

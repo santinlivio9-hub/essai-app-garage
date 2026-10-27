@@ -1,5 +1,4 @@
-// Point d'entrée : navigation à 3 volets, garde-fous tactiles iOS, service worker.
-import { renderProfile } from './profile/profile.js';
+// Point d'entrée : navigation Garage / Armurerie, garde-fous tactiles iOS, service worker.
 import { suspendAudio, resumeAudio } from './core/audio.js';
 
 const TAB_KEY = 'ls-tab';
@@ -12,11 +11,10 @@ document.addEventListener('touchmove', (e) => {
     e.preventDefault();
     return;
   }
-  if (!e.target.closest('.scroll, .rail, .picker, .seg, .projects, .sheet-body, input[type="range"]')) e.preventDefault();
+  if (!e.target.closest('.rail, .picker, .seg, .sheet-body, input[type="range"]')) e.preventDefault();
 }, { passive: false });
 
 const views = {
-  profile: document.getElementById('view-profile'),
   garage: document.getElementById('view-garage'),
   armory: document.getElementById('view-armory'),
 };
@@ -25,7 +23,7 @@ const modules = {};
 
 // Chaque univers n'est chargé qu'à sa première ouverture (démarrage plus rapide).
 async function ensure(name) {
-  if (modules[name] || name === 'profile') return modules[name];
+  if (modules[name]) return modules[name];
   if (name === 'garage') {
     const { Garage } = await import('./garage/garage.js');
     modules.garage = new Garage(views.garage);
@@ -37,7 +35,7 @@ async function ensure(name) {
 }
 
 async function show(name) {
-  if (!views[name]) name = 'profile';
+  if (!views[name]) name = 'garage';
   for (const [k, el] of Object.entries(views)) el.classList.toggle('is-active', k === name);
   for (const t of tabs) t.setAttribute('aria-selected', String(t.dataset.tab === name));
   try { localStorage.setItem(TAB_KEY, name); } catch { /* navigation privée */ }
@@ -47,10 +45,8 @@ async function show(name) {
 
 for (const t of tabs) t.addEventListener('click', () => show(t.dataset.tab));
 
-renderProfile(document.getElementById('profile-root'), { go: show });
-
-let initial = 'profile';
-try { initial = localStorage.getItem(TAB_KEY) || 'profile'; } catch { /* idem */ }
+let initial = 'garage';
+try { initial = localStorage.getItem(TAB_KEY) || 'garage'; } catch { /* idem */ }
 const hash = location.hash.replace('#', '');
 if (views[hash]) initial = hash;
 show(initial);
