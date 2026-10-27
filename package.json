@@ -6,9 +6,12 @@
     "build:css": "tailwindcss -c tailwind.config.cjs -i css/tailwind.src.css -o css/tailwind.css --minify",
     "watch:css": "tailwindcss -c tailwind.config.cjs -i css/tailwind.src.css -o css/tailwind.css --watch",
     "serve": "python3 -m http.server 8000",
-    "test:audio": "node tools/audio-test.mjs && node tools/gun-audio-test.mjs"
+    "test:audio": "node tools/audio-test.mjs && node tools/gun-audio-test.mjs",
+    "models:fetch": "node tools/fetch-models.cjs",
+    "models:optimize": "node tools/optimize-models.mjs"
   },
   "devDependencies": {
+    "@gltf-transform/cli": "^4.5.1",
     "tailwindcss": "3.4.17"
   },
   "type": "module"

@@ -1,12 +1,14 @@
 // Télécharge les modèles Sketchfab de assets/models/selection.json :
 // SKETCHFAB_TOKEN=<jeton API> node tools/fetch-models.cjs [id ...]
 // Jeton : https://sketchfab.com/settings/password (section « API Token »).
-// GLB si proposé → assets/models/<id>.glb, sinon archive glTF extraite dans assets/models/<id>/.
+// GLB si proposé → assets/models/src/<id>.glb, sinon archive glTF extraite dans assets/models/src/<id>/.
+// Étape suivante : node tools/optimize-models.cjs
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
 const dir = path.join(__dirname, '..', 'assets', 'models');
+const out = path.join(dir, 'src');
 const token = process.env.SKETCHFAB_TOKEN;
 if (!token) { console.error('SKETCHFAB_TOKEN manquant'); process.exit(1); }
 const only = process.argv.slice(2);
@@ -28,10 +30,11 @@ async function api(uid) {
 }
 
 (async () => {
+  fs.mkdirSync(out, { recursive: true });
   let failed = 0;
   for (const m of list) {
-    const glb = path.join(dir, m.id + '.glb');
-    const folder = path.join(dir, m.id);
+    const glb = path.join(out, m.id + '.glb');
+    const folder = path.join(out, m.id);
     if (fs.existsSync(glb) || fs.existsSync(folder)) { console.log(`= ${m.id} déjà présent`); continue; }
     try {
       const r = await api(m.uid);
