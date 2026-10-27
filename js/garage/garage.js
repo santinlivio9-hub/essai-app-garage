@@ -3,11 +3,19 @@ import { CARS, FINISHES, RIM_STYLES, RIM_FINISHES } from '../cars/index.js';
 import { StageRenderer, hexToHsl, hslToHex, pearlTone } from './renderer.js';
 import { rimIconSVG } from './wheels.js';
 import { Tach } from './tach.js';
-import { Sheet } from './sheet.js';
+import { Sheet } from '../core/sheet.js';
 import { EngineSim } from '../audio/engine-sim.js';
 import { EngineAudio, dspProfile } from '../audio/engine-audio.js';
 
-const STORE = 'ls-garage-v1';
+const STORE = 'ls-garage-v2';
+const sv = (p) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const ICON = {
+  drl: sv('<path d="M3 10c4-3 10-3 14 0"/><path d="M5 14h10"/><path d="M19 9l2-1M19 12h3M19 15l2 1"/>'),
+  beam: sv('<path d="M9 6c-4 0-6 3-6 6s2 6 6 6c1.5 0 2-1 2-6s-.5-6-2-6z"/><path d="M14 8l7-2M14 12h8M14 16l7 2"/>'),
+  hood: sv('<path d="M3 16h18M5 16l3-6h8l3 6"/><path d="M8 10l2-4"/><circle cx="7" cy="18.5" r="1.5"/><circle cx="17" cy="18.5" r="1.5"/>'),
+  door: sv('<path d="M5 20V8l6-5h8v17z"/><path d="M5 11h14M15 14h2"/>'),
+  frame: sv('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15l5-4 4 3 3-2 6 4"/>'),
+};
 const CALIPERS = [
   { name: 'Rouge', hex: '#c8102e' }, { name: 'Jaune', hex: '#f2b705' }, { name: 'Bleu', hex: '#1f5fbf' },
   { name: 'Vert', hex: '#2f8f46' }, { name: 'Noir', hex: '#1b1c1e' }, { name: 'Gris', hex: '#6b7076' },
@@ -29,7 +37,7 @@ function defaults(car) {
   return {
     paint: p.hex, paintName: p.name, finish: p.finish,
     rimStyle: car.rim.style, rimFinish: car.rim.finish, caliper: car.rim.caliper,
-    tint: 35, lights: false, hood: false, door: false,
+    tint: 35, drl: true, lights: false, hood: false, door: false,
   };
 }
 
@@ -259,8 +267,8 @@ export class Garage {
         <output id="tint-out">${c.tint} %</output></div>`;
     } else {
       const t = (k, ico, label) => `<button class="pill no-pv" type="button" data-toggle="${k}" aria-pressed="${!!c[k]}"><span class="ico">${ico}</span>${label}</button>`;
-      html = t('lights', '💡', 'Phares') + t('hood', '🔧', 'Capot') + t('door', '🚪', 'Portière')
-        + '<button class="pill no-pv" type="button" data-vitrine="1"><span class="ico">🖼️</span>Vitrine</button>';
+      html = t('drl', ICON.drl, 'Feux de jour') + t('lights', ICON.beam, 'Projecteurs') + t('hood', ICON.hood, 'Capot')
+        + t('door', ICON.door, 'Portière') + `<button class="pill no-pv" type="button" data-vitrine="1"><span class="ico">${ICON.frame}</span>Vitrine</button>`;
     }
     this.rail.innerHTML = html;
     this.rail.scrollLeft = 0;
@@ -293,6 +301,7 @@ export class Garage {
       const k = b.dataset.toggle;
       c[k] = !c[k];
       if (k === 'lights') this.renderer.setLights(c.lights);
+      if (k === 'drl') this.renderer.setDrl(c.drl);
       if (k === 'hood') {
         this.renderer.setHood(c.hood);
         this.root.classList.toggle('is-hood', c.hood);

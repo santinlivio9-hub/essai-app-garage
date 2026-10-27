@@ -1,7 +1,7 @@
 {
-  "name": "Livio Santin — Portfolio & Garage Studio",
-  "short_name": "LS Garage",
-  "description": "Portfolio d'ingénierie mécanique et Garage Studio interactif.",
+  "name": "Livio Santin — Ingénierie · Garage · Armurerie",
+  "short_name": "LS Studio",
+  "description": "Portfolio d'ingénierie mécanique, Garage Studio et Armurerie tactique interactifs.",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",

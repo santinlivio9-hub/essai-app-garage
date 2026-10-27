@@ -1,23 +1,9 @@
 // Graphe Web Audio : synthétiseur (AudioWorklet, repli ScriptProcessor) → égaliseur
 // « caisse » → compresseur → sortie. Doit être déverrouillé dans un geste utilisateur (iOS).
 
-const WORKLET_URL = new URL('./engine-dsp.js', import.meta.url).href;
+import { unlockAudio, suspendAudio, resumeAudio } from '../core/audio.js';
 
-// Un fichier WAV silencieux joué en boucle force la session audio iOS en mode
-// « lecture » : le son sort même quand le bouton silencieux est activé.
-function silentWav() {
-  const n = 800;
-  const b = new Uint8Array(44 + n);
-  const v = new DataView(b.buffer);
-  const s = (o, t) => [...t].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
-  s(0, 'RIFF'); v.setUint32(4, 36 + n, true); s(8, 'WAVEfmt ');
-  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
-  v.setUint32(24, 8000, true); v.setUint32(28, 8000, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true);
-  s(36, 'data'); v.setUint32(40, n, true); b.fill(128, 44);
-  let str = '';
-  b.forEach((x) => { str += String.fromCharCode(x); });
-  return 'data:audio/wav;base64,' + btoa(str);
-}
+const WORKLET_URL = new URL('./engine-dsp.js', import.meta.url).href;
 
 // Profil transmis au DSP : timbre + régimes de référence.
 export function dspProfile(car) {
@@ -39,18 +25,8 @@ export class EngineAudio {
       if (this.ctx.state !== 'running') this.ctx.resume();
       return this.ready;
     }
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return Promise.reject(new Error('Web Audio indisponible'));
-    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch { /* Safari < 17 */ }
-    try {
-      this.tag = new Audio(silentWav());
-      this.tag.loop = true;
-      this.tag.setAttribute('playsinline', '');
-      const pr = this.tag.play();
-      if (pr && pr.catch) pr.catch(() => {});
-    } catch { /* sans incidence */ }
-    this.ctx = new AC({ latencyHint: 'interactive' });
-    this.ctx.resume();
+    this.ctx = unlockAudio();
+    if (!this.ctx) return Promise.reject(new Error('Web Audio indisponible'));
     this.ready = this.build();
     return this.ready;
   }
@@ -120,10 +96,10 @@ export class EngineAudio {
   }
 
   suspend() {
-    if (this.ctx && this.ctx.state === 'running') this.ctx.suspend();
+    suspendAudio();
   }
 
   resume() {
-    if (this.ctx && this.ctx.state !== 'running') this.ctx.resume();
+    resumeAudio();
   }
 }

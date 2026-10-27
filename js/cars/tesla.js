@@ -8,7 +8,8 @@ export default {
   length: 4970,
 
   paints: [
-    { name: 'Ultra Red', hex: '#a10e17', finish: 'pearl' },
+    { name: 'Rouge Signature', hex: '#9c0d16', finish: 'pearl' },
+    { name: 'Ultra Red', hex: '#b0141c', finish: 'pearl' },
     { name: 'Rouge Multicouche', hex: '#8f0c12', finish: 'metal' },
     { name: 'Stealth Grey', hex: '#4c4f53', finish: 'metal' },
     { name: 'Lunar Silver', hex: '#b7bbbe', finish: 'metal' },

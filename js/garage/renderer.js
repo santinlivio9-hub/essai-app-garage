@@ -470,6 +470,7 @@ export class StageRenderer {
     this.setFinish(s.finish);
     this.setTint(s.tint);
     this.setLights(s.lights);
+    this.setDrl(s.drl !== false);
     this.setHood(s.hood, true);
     this.setDoor(s.door, true);
   }
@@ -492,6 +493,10 @@ export class StageRenderer {
 
   setLights(on) {
     this.svg.classList.toggle('lights-on', !!on);
+  }
+
+  setDrl(on) {
+    this.svg.classList.toggle('drl-on', !!on);
   }
 
   setRims(style) {

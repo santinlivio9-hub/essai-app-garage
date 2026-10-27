@@ -28,7 +28,7 @@ export default {
     lines: ['Ordre d’allumage 1-4-2-5-3-6', 'Deux turbos parallèles', 'Injection piézo 2 000 bar', 'Filtre à particules FAP'],
     text: 'Un grand V6 diesel feutré : injection piézo multiple très étouffée, deux turbos parallèles et une insonorisation de limousine. Le tout posé sur la suspension hydropneumatique Hydractive III+.',
   },
-  extras: ['Lunette arrière concave', 'Vitrage de custode profilé', 'Feux LED effilés sur les ailes', 'Affichage tête haute · vitrage feuilleté'],
+  extras: ['Suspension hydropneumatique Hydractive III+', 'Vitrage acoustique feuilleté', 'Lunette arrière concave · vitrage de custode profilé', 'Feux LED effilés sur les ailes', 'Affichage tête haute'],
 
   engine: { type: 'v6d', idle: 760, flare: 1080, redline: 4500, limiter: 4700, revUp: 3300, revDown: 2600, crankTime: 0.75, crankRpm: 230, lope: 6, pops: 0, shake: 0.18 },
   sound: {

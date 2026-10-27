@@ -8,13 +8,14 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="LS Garage">
+  <meta name="apple-mobile-web-app-title" content="LS Studio">
   <meta name="format-detection" content="telephone=no">
-  <meta name="description" content="Livio Santin — Génie Mécanique & Productique. Portfolio d'ingénierie et Garage Studio interactif.">
-  <title>Livio Santin — Portfolio &amp; Garage Studio</title>
+  <meta name="description" content="Livio Santin — Génie Mécanique & Productique. Portfolio d'ingénierie, Garage Studio et Armurerie tactique interactifs.">
+  <title>Livio Santin — Ingénierie · Garage · Armurerie</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="stylesheet" href="css/tailwind.css">
   <link rel="stylesheet" href="css/app.css">
   <style>html,body{background:#06070a}</style>
   <script type="module" src="js/main.js"></script>
@@ -22,12 +23,12 @@
 <body>
   <div id="app">
 
-    <!-- ============ PROFIL & PROJETS ============ -->
-    <section id="view-profile" class="view" data-view="profile" aria-label="Profil et projets">
+    <!-- ================= 1 · PROFIL & INGÉNIERIE ================= -->
+    <section id="view-profile" class="view" data-view="profile" aria-label="Profil et ingénierie">
       <div class="scroll" id="profile-root"></div>
     </section>
 
-    <!-- ============ ATELIER GARAGE ============ -->
+    <!-- ================= 2 · ATELIER GARAGE ================= -->
     <section id="view-garage" class="view garage" data-view="garage" aria-label="Atelier Garage">
       <header class="g-top">
         <div class="picker" id="car-picker" role="tablist" aria-label="Choix du véhicule"></div>
@@ -66,10 +67,10 @@
         <div class="custom">
           <div class="seg glass" id="seg" role="tablist" aria-label="Personnalisation">
             <button type="button" role="tab" data-seg="paint">Teinte</button>
-            <button type="button" role="tab" data-seg="finish">Finition</button>
+            <button type="button" role="tab" data-seg="finish">Vernis</button>
             <button type="button" role="tab" data-seg="rims">Jantes</button>
             <button type="button" role="tab" data-seg="glass">Vitres</button>
-            <button type="button" role="tab" data-seg="workshop">Atelier</button>
+            <button type="button" role="tab" data-seg="workshop">Feux · Atelier</button>
           </div>
           <div class="rail" id="rail"></div>
         </div>
@@ -90,9 +91,78 @@
       </aside>
     </section>
 
+    <!-- ================= 3 · ARMURERIE TACTIQUE ================= -->
+    <section id="view-armory" class="view armory" data-view="armory" aria-label="Armurerie tactique">
+      <header class="g-top">
+        <div class="picker" id="a-picker" role="tablist" aria-label="Choix de l'arme"></div>
+      </header>
+
+      <div class="studio studio-armory" id="a-studio">
+        <div class="studio-mark" id="a-mark" aria-hidden="true"></div>
+        <svg class="stage" id="stage-arm" role="img" aria-label="Arme sélectionnée"></svg>
+        <div class="studio-hud">
+          <div class="car-title">
+            <span class="brand" id="a-maker"></span>
+            <h2 id="a-name"></h2>
+            <span class="gen" id="a-variant"></span>
+          </div>
+          <div class="hud-right"><span class="counter" id="a-counter"></span></div>
+        </div>
+        <div class="badges" id="a-badges"></div>
+        <div class="dots" id="a-dots"></div>
+        <button class="restore glass" id="a-restore" type="button">︿ Commandes</button>
+      </div>
+
+      <div class="deck" id="a-deck">
+        <div class="grid items-center gap-2 h-[74px] grid-cols-[100px_66px_minmax(0,1fr)]">
+          <div class="target glass" id="a-target" role="button" aria-label="Cible — toucher pour effacer"></div>
+          <button class="btn-fire" id="a-fire" type="button" aria-label="Tirer"><span><b>FIRE</b><small>TIRER</small></span></button>
+          <div class="grid grid-rows-2 gap-1.5 h-full min-w-0">
+            <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-1.5 min-w-0">
+              <div class="ammo glass" id="a-ammo" aria-live="polite"></div>
+              <button class="mode-btn glass" id="a-mode" type="button" aria-label="Sélecteur de tir"><small>SÉL.</small><b>SEMI</b></button>
+            </div>
+            <button class="reload-btn glass" id="a-reload" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>
+              Recharger
+            </button>
+          </div>
+        </div>
+        <div class="custom">
+          <div class="seg glass" id="a-seg" role="tablist" aria-label="Accessoires"></div>
+          <div class="rail" id="a-rail"></div>
+        </div>
+      </div>
+      <div class="sheet-space"></div>
+      <div class="tab-space"></div>
+
+      <aside class="sheet" id="a-sheet" aria-label="Fiche balistique">
+        <div class="sheet-head" role="button" tabindex="0" aria-expanded="false">
+          <div class="grip"></div>
+          <div class="row">
+            <h3>Fiche balistique</h3>
+            <span class="sum" id="a-sum"></span>
+            <span class="chev" aria-hidden="true">︿</span>
+          </div>
+        </div>
+        <div class="sheet-body" id="a-sheet-body"></div>
+      </aside>
+    </section>
+
+    <!-- ================= Navigation ================= -->
     <nav class="tabbar glass" role="tablist" aria-label="Navigation">
-      <button class="tab" type="button" role="tab" data-tab="profile" aria-selected="false"><span class="ico">📁</span>Profil &amp; Projets</button>
-      <button class="tab" type="button" role="tab" data-tab="garage" aria-selected="false"><span class="ico">🏎️</span>Atelier Garage</button>
+      <button class="tab" type="button" role="tab" data-tab="profile" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="2.4"/><path d="M12 9.6v1M12 15.4v1M8.6 13h1M14.4 13h1"/></svg>
+        <span>Ingénierie</span>
+      </button>
+      <button class="tab" type="button" role="tab" data-tab="garage" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16v-3l2.5-5h11L20 13v3z"/><path d="M3 13h17"/><circle cx="7" cy="16.5" r="2"/><circle cx="16.5" cy="16.5" r="2"/></svg>
+        <span>Garage</span>
+      </button>
+      <button class="tab" type="button" role="tab" data-tab="armory" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+        <span>Armurerie</span>
+      </button>
     </nav>
   </div>
 </body>

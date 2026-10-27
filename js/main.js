@@ -1,6 +1,6 @@
-// Point d'entrée : navigation, garde-fous tactiles iOS, service worker.
-import { renderProfile } from './portfolio.js';
-import { Garage } from './garage/garage.js';
+// Point d'entrée : navigation à 3 volets, garde-fous tactiles iOS, service worker.
+import { renderProfile } from './profile/profile.js';
+import { suspendAudio, resumeAudio } from './core/audio.js';
 
 const TAB_KEY = 'ls-tab';
 
@@ -18,27 +18,57 @@ document.addEventListener('touchmove', (e) => {
 const views = {
   profile: document.getElementById('view-profile'),
   garage: document.getElementById('view-garage'),
+  armory: document.getElementById('view-armory'),
 };
 const tabs = [...document.querySelectorAll('.tab')];
-let garage = null;
+const modules = {};
 
-function show(name) {
+// Chaque univers n'est chargé qu'à sa première ouverture (démarrage plus rapide).
+async function ensure(name) {
+  if (modules[name] || name === 'profile') return modules[name];
+  if (name === 'garage') {
+    const { Garage } = await import('./garage/garage.js');
+    modules.garage = new Garage(views.garage);
+  } else if (name === 'armory') {
+    const { Armory } = await import('./armory/armory.js');
+    modules.armory = new Armory(views.armory);
+  }
+  return modules[name];
+}
+
+async function show(name) {
+  if (!views[name]) name = 'profile';
   for (const [k, el] of Object.entries(views)) el.classList.toggle('is-active', k === name);
   for (const t of tabs) t.setAttribute('aria-selected', String(t.dataset.tab === name));
-  if (name === 'garage' && !garage) garage = new Garage(views.garage);
-  if (garage) garage.setActive(name === 'garage');
   try { localStorage.setItem(TAB_KEY, name); } catch { /* navigation privée */ }
+  await ensure(name);
+  for (const [k, m] of Object.entries(modules)) if (m) m.setActive(k === name);
 }
 
 for (const t of tabs) t.addEventListener('click', () => show(t.dataset.tab));
 
-renderProfile(document.getElementById('profile-root'), { onGarage: () => show('garage') });
+renderProfile(document.getElementById('profile-root'), { go: show });
 
 let initial = 'profile';
 try { initial = localStorage.getItem(TAB_KEY) || 'profile'; } catch { /* idem */ }
 const hash = location.hash.replace('#', '');
-if (hash === 'garage' || hash === 'profile') initial = hash;
-show(views[initial] ? initial : 'profile');
+if (views[hash]) initial = hash;
+show(initial);
+window.addEventListener('hashchange', () => {
+  const h = location.hash.replace('#', '');
+  if (views[h]) show(h);
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    for (const m of Object.values(modules)) if (m) m.setActive(false);
+    suspendAudio();
+  } else {
+    resumeAudio();
+    const cur = Object.keys(views).find((k) => views[k].classList.contains('is-active'));
+    if (modules[cur]) modules[cur].setActive(true);
+  }
+});
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));

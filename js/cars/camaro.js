@@ -20,7 +20,7 @@ export default {
   rim: { style: 'forged', finish: 'black-mat', caliper: '#c8102e' },
 
   specs: {
-    power: '659 ch', torque: '881 Nm', sprint: '3,7 s', vmax: '277 km/h',
+    power: '650 hp · 659 ch', torque: '881 Nm', sprint: '3,7 s', vmax: '277 km/h',
     engine: 'V8 LT4 compresseur', displacement: '6 162 cm³',
     gearbox: 'Tremec TR6060 · 6 manuelle', drive: 'Propulsion · eLSD', weight: '1 750 kg',
   },
@@ -29,7 +29,7 @@ export default {
     lines: ['Eaton TVS R1740 · 0,7 bar', 'Ordre d’allumage 1-7-2-6-5-4-8-3', 'Injection directe · AFM', 'Zone rouge 6 500 tr/min'],
     text: 'Le compresseur volumétrique Eaton à quatre lobes logé dans le V du bloc produit le sifflement aigu qui monte avec les tours, posé sur le grondement cross-plane du LT4.',
   },
-  extras: ['Extracteur de capot en fibre de carbone', 'Canards aérodynamiques avant', 'Aileron carbone massif 1LE', 'Amortisseurs Multimatic DSSV'],
+  extras: ['Capot carbone à extracteur central', 'Canards aérodynamiques avant', 'Aileron carbone massif 1LE', 'Amortisseurs Multimatic DSSV'],
 
   engine: { type: 'v8sc', idle: 720, flare: 1650, redline: 6500, limiter: 6600, revUp: 8000, revDown: 5000, crankTime: 0.85, crankRpm: 215, lope: 26, pops: 0.4, shake: 0.95 },
   sound: {
