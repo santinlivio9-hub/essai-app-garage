@@ -6,7 +6,6 @@ export default {
   name: 'MP5A3',
   nameSD: 'MP5-SD',
   short: 'MP5A3',
-  mark: 'MP5',
   type: 'smg',
   // Modèle 3D (assets/models/selection.json).
   model: {

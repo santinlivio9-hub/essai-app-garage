@@ -3,7 +3,7 @@ export default {
   id: 'rs3',
   brand: 'Audi Sport',
   name: 'RS 3 Berline',
-  mark: 'RS3',
+  short: 'RS 3',
   gen: '8Y · 2.5 TFSI quattro',
   length: 4542,
   // Modèle 3D (assets/models/selection.json) : matériaux pilotés par l'interface, repérés par leur nom.

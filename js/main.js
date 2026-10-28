@@ -20,6 +20,7 @@ const views = {
 };
 const tabs = [...document.querySelectorAll('.tab')];
 const modules = {};
+window.__ls = modules; // accès des scripts de test (tools/*.cjs)
 
 // Chaque univers n'est chargé qu'à sa première ouverture (démarrage plus rapide).
 async function ensure(name) {

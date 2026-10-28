@@ -3,7 +3,7 @@ export default {
   id: 'camaro',
   brand: 'Chevrolet',
   name: 'Camaro ZL1 1LE',
-  mark: 'ZL1',
+  short: 'Camaro',
   gen: 'Gen 6 · LT4 6.2 V8 Supercharged',
   length: 4783,
   // Modèle 3D (assets/models/selection.json) : matériaux pilotés par l'interface, repérés par leur nom.

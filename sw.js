@@ -1,7 +1,7 @@
 // Service worker : précache de l'application pour un fonctionnement hors-ligne.
 // Les modèles 3D (assets/models/*.glb) sont mis en cache à leur premier chargement (cache d'abord).
 // Incrémentez VERSION à chaque déploiement pour forcer la mise à jour.
-const VERSION = 'ls-studio-v4';
+const VERSION = 'ls-studio-v5';
 const ASSETS = [
   './',
   'index.html',
@@ -9,6 +9,28 @@ const ASSETS = [
   'css/tailwind.css',
   'css/app.css',
   'assets/models/selection.json',
+  'assets/thumbs/acc-angled.webp',
+  'assets/thumbs/acc-comp.webp',
+  'assets/thumbs/acc-handstop.webp',
+  'assets/thumbs/acc-holo.webp',
+  'assets/thumbs/acc-light-pistol.webp',
+  'assets/thumbs/acc-light-rifle.webp',
+  'assets/thumbs/acc-magnifier.webp',
+  'assets/thumbs/acc-peq.webp',
+  'assets/thumbs/acc-rds.webp',
+  'assets/thumbs/acc-sd.webp',
+  'assets/thumbs/acc-stubby.webp',
+  'assets/thumbs/acc-supRifle.webp',
+  'assets/thumbs/car-c6.webp',
+  'assets/thumbs/car-camaro.webp',
+  'assets/thumbs/car-corvette.webp',
+  'assets/thumbs/car-rs3.webp',
+  'assets/thumbs/car-tesla.webp',
+  'assets/thumbs/gun-benelli.webp',
+  'assets/thumbs/gun-canik.webp',
+  'assets/thumbs/gun-glock17.webp',
+  'assets/thumbs/gun-hk416.webp',
+  'assets/thumbs/gun-mp5.webp',
   'js/armory/accessories.js',
   'js/armory/armory.js',
   'js/armory/gun-audio.js',
@@ -32,6 +54,7 @@ const ASSETS = [
   'js/core/audio.js',
   'js/core/color.js',
   'js/core/credits.js',
+  'js/core/picker.js',
   'js/core/sheet.js',
   'js/core/stage3d.js',
   'js/core/util.js',

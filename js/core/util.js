@@ -34,3 +34,11 @@ export const ease = {
 export function mapPath(d, X, Y) {
   return d.replace(/(-?\d+(?:\.\d+)?)[\s,]+(-?\d+(?:\.\d+)?)/g, (_, a, b) => `${fx(X(+a))} ${fx(Y(+b))}`);
 }
+
+// Carte des menus de personnalisation : un visuel (vignette 3D, aperçu, icône) au-dessus du libellé.
+export function card(attrs, label, visual, pressed, cls = '') {
+  return `<button class="opt${cls ? ` ${cls}` : ''}" type="button" ${attrs} aria-pressed="${!!pressed}"><span class="opt-v">${visual}</span><span class="opt-l">${esc(label)}</span></button>`;
+}
+
+// Vignette 3D pré-rendue (tools/thumbs.cjs → assets/thumbs/).
+export const thumb = (name) => `<img src="assets/thumbs/${name}.webp" alt="" decoding="async" draggable="false">`;

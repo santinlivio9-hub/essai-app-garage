@@ -32,6 +32,7 @@ const TRIM = {
   black: () => new THREE.MeshStandardMaterial({ color: 0x0c0d0e, roughness: 0.55, metalness: 0.1 }),
   chrome: () => new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.1, metalness: 1 }),
   interior: () => new THREE.MeshStandardMaterial({ color: 0x1b1c1e, roughness: 0.7, metalness: 0.05 }),
+  tyre: () => new THREE.MeshStandardMaterial({ color: 0x141516, roughness: 0.88, metalness: 0 }),
 };
 
 function paintMaterial() {
@@ -190,6 +191,15 @@ export class GarageScene {
     };
     const meshes = [];
     obj.traverse((m) => { if (m.isMesh) meshes.push(m); });
+    // zones : un matériau d'origine partagé par des pièces de natures différentes est découpé
+    // (repère brut du modèle), chaque morceau reçoit son rôle (pneu, habitacle, phare…)
+    for (const z of M.zones || []) {
+      for (const m of [...meshes]) {
+        if (m.userData.role || !z.mat.test(m.material.name || '')) continue;
+        const t = splitMesh(m, obj, z.test);
+        if (t) { t.userData.role = z.role; meshes.push(t); }
+      }
+    }
 
     if (M.meshes) {
       // modèle à matériau unique : rôle attribué pièce par pièce
@@ -207,9 +217,22 @@ export class GarageScene {
       for (const m of meshes) m.material = by[role[m.name]] || interior;
     } else {
       const trims = Object.entries(M.trim || {}).map(([re, k]) => [new RegExp(re), TRIM[k]()]);
+      const shared = {};
+      const roleMat = (role, src) => {
+        if (role === 'head') {
+          return once(src, (s0) => {
+            const x = lampMaterial(TRIM.chrome());
+            x.color.set(0xdfe6ee);
+            mats.head.push(x);
+            return x;
+          });
+        }
+        return shared[role] || (shared[role] = TRIM[role === 'trim' ? 'chrome' : role]());
+      };
       for (const m of meshes) {
         const n = m.material.name || '';
-        if (M.paint && M.paint.test(n)) m.material = mats.paint;
+        if (m.userData.role) m.material = roleMat(m.userData.role, m.material);
+        else if (M.paint && M.paint.test(n)) m.material = mats.paint;
         else if (M.glass && M.glass.test(n)) m.material = mats.glass;
         else if (M.rim && M.rim.test(n)) {
           m.material = once(m.material, (src) => {

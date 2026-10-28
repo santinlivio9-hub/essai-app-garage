@@ -5,7 +5,6 @@ export default {
   maker: 'Canik × Taran Tactical',
   name: 'Canik TTI Combat',
   short: 'TTI Combat',
-  mark: 'TTI',
   type: 'pistol',
   // Modèle 3D (Canik Rival S, assets/models/selection.json) : pièces repérées par leur nom.
   model: {

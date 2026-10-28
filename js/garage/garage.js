@@ -5,6 +5,8 @@ import { hexToHsl, hslToHex, pearlTone } from '../core/color.js';
 import { creditHTML, creditsReady } from '../core/credits.js';
 import { Tach } from './tach.js';
 import { Sheet } from '../core/sheet.js';
+import { Picker } from '../core/picker.js';
+import { card } from '../core/util.js';
 import { EngineSim } from '../audio/engine-sim.js';
 import { EngineAudio, dspProfile } from '../audio/engine-audio.js';
 
@@ -17,6 +19,34 @@ const ICON = {
   door: sv('<path d="M5 20V8l6-5h8v17z"/><path d="M5 11h14M15 14h2"/>'),
   frame: sv('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15l5-4 4 3 3-2 6 4"/>'),
 };
+// Aperçus dessinés des menus : jante (5 doubles branches) teintée selon la finition, étrier, vitre.
+let uid = 0;
+function rimSVG(base, hi, lo) {
+  const id = `rg${uid++}`;
+  let win = '';
+  for (let k = 0; k < 5; k++) {
+    const a = (k * 72 - 90) * Math.PI / 180;
+    const p = (r, d) => `${(22 + r * Math.cos(a + d)).toFixed(2)} ${(22 + r * Math.sin(a + d)).toFixed(2)}`;
+    win += `<path d="M${p(6, 0.2)}L${p(13.6, 0.13)}A13.6 13.6 0 0 1 ${p(13.6, 1.12)}L${p(6, 1.05)}Z"/>`;
+  }
+  return `<svg viewBox="0 0 44 44"><defs><radialGradient id="${id}" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="${hi}"/><stop offset=".5" stop-color="${base}"/><stop offset="1" stop-color="${lo}"/></radialGradient></defs>
+    <circle cx="22" cy="22" r="21" fill="#0d0e10"/><circle cx="22" cy="22" r="20.2" fill="none" stroke="#26282c" stroke-width="1.2"/>
+    <circle cx="22" cy="22" r="16" fill="url(#${id})"/><circle cx="22" cy="22" r="15.2" fill="none" stroke="rgba(0,0,0,.35)" stroke-width=".8"/>
+    <g fill="#0a0b0c">${win}</g><circle cx="22" cy="22" r="4.4" fill="url(#${id})" stroke="rgba(0,0,0,.4)" stroke-width=".6"/><circle cx="22" cy="22" r="1.6" fill="#1a1b1d"/></svg>`;
+}
+function caliperSVG(hex) {
+  return `<svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="17" fill="#2b2e33"/><circle cx="22" cy="22" r="17" fill="none" stroke="#565b62" stroke-width="2" stroke-dasharray="1.5 2.2"/><circle cx="22" cy="22" r="6" fill="#16171a"/>
+    <path d="M9 13a17 17 0 0 1 26 0l-4 4a11 11 0 0 0-18 0z" fill="${hex}" stroke="rgba(0,0,0,.5)" stroke-width=".8"/>
+    <path d="M12 12.6a15.5 15.5 0 0 1 20 0" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="1" stroke-linecap="round"/></svg>`;
+}
+function windowSVG(pct) {
+  const a = (0.1 + (pct / 100) * 0.86).toFixed(2);
+  return `<svg viewBox="0 0 84 44"><defs><linearGradient id="wsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fc2e6"/><stop offset="1" stop-color="#e8d9c2"/></linearGradient></defs>
+    <path d="M6 38 L20 10 Q22 6 27 6 H62 Q68 6 71 11 L79 38 Z" fill="url(#wsky)"/><path d="M14 38 L26 24 L36 30 L48 18 L60 28 L79 38Z" fill="#5b6f5a" opacity=".8"/>
+    <path id="wtint" d="M6 38 L20 10 Q22 6 27 6 H62 Q68 6 71 11 L79 38 Z" fill="#05070a" fill-opacity="${a}"/>
+    <path d="M6 38 L20 10 Q22 6 27 6 H62 Q68 6 71 11 L79 38 Z M44 6 V38" fill="none" stroke="#c9ced4" stroke-width="1.6"/><path d="M24 10 L30 10 L22 26" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.4" stroke-linecap="round"/></svg>`;
+}
+
 const CALIPERS = [
   { name: 'Rouge', hex: '#c8102e' }, { name: 'Jaune', hex: '#f2b705' }, { name: 'Bleu', hex: '#1f5fbf' },
   { name: 'Vert', hex: '#2f8f46' }, { name: 'Noir', hex: '#1b1c1e' }, { name: 'Gris', hex: '#6b7076' },
@@ -69,7 +99,7 @@ export class Garage {
     this.audio = new EngineAudio();
     this.btnStart = $('#btn-start', root);
     this.btnGas = $('#btn-gas', root);
-    this.gasFill = $('#gas-fill', root);
+    this.gasPct = $('#gas-pct', root);
     this.rail = $('#rail', root);
     this.sheet = new Sheet($('#sheet', root), { onDismiss: () => this.setVitrine(true) });
     this.busy = false;
@@ -135,25 +165,14 @@ export class Garage {
 
   updateTexts() {
     const car = this.car;
-    $('#car-brand', this.root).textContent = car.brand;
-    const mark = $('#studio-mark', this.root);
-    mark.classList.add('swap');
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      mark.textContent = car.mark;
-      mark.classList.remove('swap');
-    }));
-    $('#car-name', this.root).textContent = car.name;
-    $('#car-gen', this.root).textContent = car.gen;
-    $('#car-counter', this.root).textContent = `${String(this.idx + 1).padStart(2, '0')} / ${String(CARS.length).padStart(2, '0')}`;
+    // sur la vue 3D : le nom seul (les caractéristiques sont dans la fiche technique)
+    const title = $('#car-name', this.root);
+    title.innerHTML = `<span>${esc(car.brand)}</span> ${esc(car.name)}`;
+    title.classList.remove('swap');
+    void title.offsetWidth;
+    title.classList.add('swap');
+    this.picker.select(this.idx);
     const s = car.specs;
-    $('#badges', this.root).innerHTML = [
-      [s.power, 'puissance'], [s.torque, 'couple'], [s.sprint, '0-100'],
-    ].map(([v, k]) => `<span class="badge">${esc(v)} <small>${k}</small></span>`).join('');
-    $('#dots', this.root).innerHTML = CARS.map((_, i) => `<i class="${i === this.idx ? 'on' : ''}"></i>`).join('');
-    for (const b of this.picker.children) b.setAttribute('aria-selected', String(+b.dataset.i === this.idx));
-    const chip = this.picker.children[this.idx];
-    // défilement local du sélecteur (scrollIntoView ferait aussi défiler la vue entière)
-    if (chip) this.picker.scrollTo({ left: chip.offsetLeft - (this.picker.clientWidth - chip.offsetWidth) / 2, behavior: 'smooth' });
     $('#sheet-sum', this.root).textContent = `${s.power} · ${s.torque} · ${s.sprint}`;
     this.renderSheet();
   }
@@ -172,6 +191,7 @@ export class Garage {
       ['Zone rouge', ev ? `${car.engine.redline.toLocaleString('fr-FR')} tr/min moteur` : `${car.engine.redline.toLocaleString('fr-FR')} tr/min`],
     ];
     $('#sheet-body', this.root).innerHTML = `
+      <p class="lead">${esc(car.gen)}</p>
       <div class="spec-grid">${specs.map(([k, v]) => `<div class="spec"><small>${k}</small><b>${esc(v)}</b></div>`).join('')}</div>
       <h4>Sous le capot</h4><p>${esc(car.underHood.text)}</p>
       <h4>Signatures &amp; préparation</h4><ul>${car.extras.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
@@ -188,14 +208,9 @@ export class Garage {
   // ---------- sélecteur de véhicule ----------
 
   buildPicker() {
-    this.picker = $('#car-picker', this.root);
-    this.picker.innerHTML = CARS.map((car, i) => `<button class="chip" type="button" role="tab" data-i="${i}" aria-selected="false">${esc(car.name)}</button>`).join('');
-    this.picker.addEventListener('click', (e) => {
-      const b = e.target.closest('.chip');
-      if (!b) return;
-      const i = +b.dataset.i;
-      if (i !== this.idx) this.go(i);
-    });
+    this.picker = new Picker($('#car-picker', this.root),
+      CARS.map((car) => ({ label: car.short, title: `${car.brand} ${car.name}`, img: `assets/thumbs/car-${car.id}.webp` })),
+      (i) => this.go(i));
   }
 
   // Changement de voiture : capot et portière refermés, puis la caméra glisse jusqu'à la place suivante.
@@ -233,6 +248,9 @@ export class Garage {
         this.c.tint = +e.target.value;
         this.scene.tint(this.scene.current, this.c.tint);
         $('#tint-out', this.root).textContent = `${this.c.tint} %`;
+        e.target.style.setProperty('--k', ((this.c.tint - 10) / 85).toFixed(3));
+        const w = this.rail.querySelector('#wtint');
+        if (w) w.setAttribute('fill-opacity', (0.1 + (this.c.tint / 100) * 0.86).toFixed(2));
       } else if (e.target.id === 'paint-custom') {
         this.setPaint(e.target.value, 'Teinte sur mesure');
       }
@@ -253,21 +271,21 @@ export class Garage {
         <input id="paint-custom" type="color" value="${c.paint}" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none"></label>`;
     } else if (this.seg === 'finish') {
       const pc = pearlTone(c.paint);
-      html = FINISHES.map((f) => `<button class="pill" type="button" data-finish="${f.id}" aria-pressed="${f.id === c.finish}"><span class="pv fin-pv" data-f="${f.id}" style="--c:${c.paint};--pc:${pc}"></span>${f.name}</button>`).join('');
+      html = FINISHES.map((f) => card(`data-finish="${f.id}"`, f.name, `<span class="fin-pv" data-f="${f.id}" style="--c:${c.paint};--pc:${pc}"></span>`, f.id === c.finish)).join('');
     } else if (this.seg === 'rims') {
-      html = RIM_FINISHES.map((r) => `<button class="rim-dot" type="button" data-rimfin="${r.id}" aria-pressed="${r.id === c.rimFinish}" aria-label="${r.name}" title="${r.name}" style="--b:${r.base};--hi:${r.hi};--lo:${r.lo}"></button>`).join('');
+      html = RIM_FINISHES.map((r) => card(`data-rimfin="${r.id}"`, r.name, rimSVG(r.base, r.hi, r.lo), r.id === c.rimFinish, 'sq')).join('');
       html += '<span class="sep"></span>';
-      html += CALIPERS.map((k) => `<button class="rim-dot" type="button" data-caliper="${k.hex}" aria-pressed="${k.hex === c.caliper}" aria-label="Étriers ${k.name}" title="Étriers ${k.name}" style="--b:${k.hex};--hi:${k.hex};--lo:#000;border-radius:8px"></button>`).join('');
+      html += CALIPERS.map((k) => card(`data-caliper="${k.hex}" aria-label="Étriers ${k.name}"`, `Étriers ${k.name.toLowerCase()}`, caliperSVG(k.hex), k.hex === c.caliper, 'sq')).join('');
     } else if (this.seg === 'glass') {
-      html = `<div class="tint-ctl"><label for="tint">Teinte des vitres</label>
-        <input id="tint" type="range" min="10" max="95" step="1" value="${c.tint}" aria-label="Opacité des vitres">
-        <output id="tint-out">${c.tint} %</output></div>`;
+      html = `<div class="tint-ctl"><span class="tint-pv">${windowSVG(c.tint)}</span>
+        <span class="tint-in"><label for="tint">Teinte des vitres <output id="tint-out">${c.tint} %</output></label>
+        <input id="tint" type="range" min="10" max="95" step="1" value="${c.tint}" aria-label="Opacité des vitres" style="--k:${((c.tint - 10) / 85).toFixed(3)}"></span></div>`;
     } else {
-      const t = (k, ico, label) => `<button class="pill no-pv" type="button" data-toggle="${k}" aria-pressed="${!!c[k]}"><span class="ico">${ico}</span>${label}</button>`;
+      const t = (k, ico, label) => card(`data-toggle="${k}"`, label, `${ico}<i class="led"></i>`, !!c[k], 'tog');
       // capot et portière seulement si le modèle 3D les a en pièces séparées
       html = t('drl', ICON.drl, 'Feux de jour') + t('lights', ICON.beam, 'Projecteurs')
         + (car.model.hood ? t('hood', ICON.hood, 'Capot') : '') + (car.model.door ? t('door', ICON.door, 'Portière') : '')
-        + `<button class="pill no-pv" type="button" data-vitrine="1"><span class="ico">${ICON.frame}</span>Vitrine</button>`;
+        + card('data-vitrine="1"', 'Vitrine', ICON.frame, false, 'tog');
     }
     this.rail.innerHTML = html;
     this.rail.scrollLeft = 0;
@@ -368,6 +386,11 @@ export class Garage {
   bindEngine() {
     this.btnStart.addEventListener('click', () => {
       if (this.busy) return;
+      // impulsion visuelle + retour haptique : le bouton « répond » au doigt
+      this.btnStart.classList.remove('kick');
+      void this.btnStart.offsetWidth;
+      this.btnStart.classList.add('kick');
+      if (navigator.vibrate) navigator.vibrate(18);
       const ready = this.audio.unlock();
       if (ready && ready.catch) ready.catch(() => $('#audio-warn', this.root).classList.add('show'));
       if (this.sim.state === 'off' || this.sim.state === 'stopping') this.sim.start();
@@ -421,10 +444,12 @@ export class Garage {
     }
     const gasOn = state === 'run';
     if (this.btnGas.disabled === gasOn) this.btnGas.disabled = !gasOn;
-    const fill = `scaleX(${o.throttle.toFixed(2)})`;
+    const fill = o.throttle.toFixed(2);
     if (fill !== this._fill) {
-      this.gasFill.style.transform = fill;
+      this.btnGas.style.setProperty('--thr', fill);
       this._fill = fill;
+      const pct = Math.round(o.throttle * 100);
+      this.gasPct.firstChild.nodeValue = String(pct);
     }
 
     // vibrations de caisse + couple de réaction (transform composité, peu coûteux)

@@ -3,14 +3,24 @@ export default {
   id: 'c6',
   brand: 'Citroën',
   name: 'C6 Exclusive',
-  mark: 'C6',
+  short: 'C6',
   gen: '2012 · V6 3.0 HDi 240 Biturbo',
   length: 4908,
   // Modèle 3D (assets/models/selection.json) : modèle sans textures, matériaux redéfinis ici.
+  // Le matériau « Color_M08 » mélange toit, montants, rétroviseurs, bas de caisse, pneus et habitacle ;
+  // « Material » mélange jantes et petites pièces : découpage par zones (repère brut du modèle :
+  // x avant → arrière de −44 à 49, y sol → toit de 0 à 27, z largeur ±20 ; roues en x −22,4 et 33).
   model: {
     file: 'assets/models/c6.glb', rotate: [0, 90, 0],
-    paint: /^material$/, glass: /material_4/, rim: /^Material$/, tail: /Color_A07/,
-    trim: { '^Color_M08$': 'black', 'DefaultMaterial_0': 'chrome' },
+    paint: /^material$|^Color_M08$/, glass: /material_4/, rim: /^Material$/, tail: /Color_A07/,
+    trim: { 'DefaultMaterial_0': 'chrome' },
+    zones: [
+      { mat: /^Color_M08$/, role: 'tyre', test: (v) => Math.abs(v.z) > 9.4 && [-22.4, 33].some((x) => Math.hypot(v.x - x, v.y - 6.6) < 7.1) },
+      { mat: /^Material$/, role: 'trim', test: (v) => ![-22.4, 33].some((x) => Math.hypot(v.x - x, v.y - 6.6) < 6.2) },
+      { mat: /^Color_M08$/, role: 'interior', test: (v) => ![-22.4, 33].some((x) => Math.hypot(v.x - x, v.y - 6.6) < 8) && v.x > -16.5 && v.x < 37.5 && v.y > 3.2 && v.y < 23.6 && Math.abs(v.z) < 14.6 - Math.max(0, v.y - 15) * 0.32 },
+      { mat: /^Color_M08$/, role: 'black', test: (v) => v.y < 2.2 || (v.x < -41.5 && v.y < 6.5) },
+      { mat: /^DefaultMaterial_0$/, role: 'head', test: (v) => v.x < -34 && v.y > 8.2 && v.y < 14.8 && Math.abs(v.z) > 8.5 },
+    ],
     hood: /C-bonnet/, door: /C-doors_60/,
   },
 
@@ -45,7 +55,7 @@ export default {
     res: [[64, 2.0, 1.1], [168, 2.4, 0.5], [390, 3, 0.16]], resB: 1.04, bankDelay: 0.5, direct: 0.8,
     lp: 380, lpThr: 900, lpRpm: 500, drive: 1.15,
     intake: 0.18, turbo: { amt: 0.22, spool: 1500, f0: 1700, f1: 2400 }, whine: null, clatter: 0.5,
-    starter: { amt: 0.55, f: 130 }, gain: 0.42,
+    starter: { amt: 0.55, f: 130 }, gain: 0.52,
   },
 
 };

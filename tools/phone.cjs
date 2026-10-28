@@ -33,7 +33,7 @@ const GL = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swifts
     await p.waitForTimeout(300);
     await shot('rims');
     // capot articulé : Corvette (RS3 / Camaro / Tesla n'en ont pas dans leur modèle)
-    await p.tap('#car-picker .chip[data-i="1"]');
+    await p.tap('#car-picker .pick[data-i="1"]');
     await p.waitForTimeout(6000);
     await p.tap('[data-seg="workshop"]');
     await p.tap('[data-toggle="lights"]');
@@ -47,11 +47,12 @@ const GL = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swifts
     await p.tap('[data-tab="garage"]');
     await p.waitForTimeout(600);
     await p.tap('#btn-start');
-    await p.waitForTimeout(2500);
+    await p.waitForFunction(() => !document.querySelector('#btn-gas').disabled, null, { timeout: 60000 });
+    await p.waitForTimeout(800);
     const box = await p.locator('#btn-gas').boundingBox();
     await p.mouse.move(box.x + 40, box.y + 30);
     await p.mouse.down();
-    await p.waitForTimeout(500);
+    await p.waitForTimeout(1400);
     await shot('rev');
     await p.mouse.up();
     await p.waitForTimeout(300);
@@ -61,7 +62,7 @@ const GL = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swifts
     await p.tap('[data-tab="garage"]');
     await p.waitForTimeout(600);
     for (let i = 1; i < 5; i++) {
-      await p.tap(`.chip[data-i="${i}"]`);
+      await p.tap(`.pick[data-i="${i}"]`);
       await p.waitForTimeout(6000);
       await shot('car' + i);
     }
@@ -70,14 +71,14 @@ const GL = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swifts
     await p.waitForTimeout(6000);
     await shot('w0');
     for (let i = 1; i < 5; i++) {
-      await p.tap(`#a-picker .chip[data-i="${i}"]`);
+      await p.tap(`#a-picker .pick[data-i="${i}"]`);
       await p.waitForTimeout(6000);
       await shot('w' + i);
     }
   } else if (scenario === 'shoot') {
     await p.tap('[data-tab="armory"]');
     await p.waitForTimeout(700);
-    await p.tap(`#a-picker .chip[data-i="2"]`);
+    await p.tap(`#a-picker .pick[data-i="2"]`);
     await p.waitForTimeout(6000);
     await p.tap('#a-mode');
     const box = await p.locator('#a-fire').boundingBox();
@@ -118,7 +119,7 @@ const GL = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swifts
     await p.waitForTimeout(7000);
     await shot('c0');
     for (let i = 1; i < 5; i++) {
-      await p.tap(`#a-picker .chip[data-i="${i}"]`);
+      await p.tap(`#a-picker .pick[data-i="${i}"]`);
       await p.waitForTimeout(7000);
       await shot('c' + i);
     }

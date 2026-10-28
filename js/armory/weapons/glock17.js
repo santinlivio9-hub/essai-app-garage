@@ -5,7 +5,6 @@ export default {
   maker: 'Glock',
   name: 'Glock 17 Gen5 MOS',
   short: 'G17 Gen5',
-  mark: 'G17',
   type: 'pistol',
   // Modèle 3D (assets/models/selection.json) : un seul matériau, glissière découpée par la hauteur.
   model: {
