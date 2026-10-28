@@ -66,6 +66,11 @@
       this.wakePh = 0;
       this.contact = 0;
       this.hp = new Biquad().highpass(24, 0.7, sr);
+      this.hpS = new Biquad().highpass(90, 0.7, sr);
+      this.lpS = new Biquad().lowpass(1800, 0.7, sr);
+      this.mechHP = new Biquad().highpass(2600, 0.8, sr);
+      this.mechEnv = 0;
+      this.side = 0;
       this.out = 0;
     }
 
@@ -130,9 +135,10 @@
     render(L, R, n, P) {
       const p = this.p;
       if (!p) { L.fill(0); if (R) R.fill(0); return; }
-      if (p.type === 'ev') this.renderEV(L, n, P);
-      else this.renderICE(L, n, P);
-      if (R) R.set(L);
+      if (p.type === 'ev') {
+        this.renderEV(L, n, P);
+        if (R) R.set(L);
+      } else this.renderICE(L, n, P, R);
     }
 
     fire(j, P) {
@@ -153,12 +159,14 @@
       }
       this.s1[b] += amp;
       this.s2[b] += amp;
+      // distribution : soupapes et chaîne, un « tic » métallique par allumage
+      if (P.ignition > 0.5 || P.starter > 0.5) this.mechEnv += 0.5 + 0.5 * this.thr;
       // nouveau calage pour le prochain cycle (dispersion de combustion)
       const jit = p.lumpy * idleN * 10 + 0.6;
       this.ev[j] = (this.base[j] + (Math.random() * 2 - 1) * jit + 720) % 720;
     }
 
-    renderICE(out, n, P) {
+    renderICE(out, n, P, R) {
       const p = this.p;
       const sr = this.sr;
       const N = p.cyl;
@@ -179,6 +187,10 @@
         this.turbBP.bandpass(tf, 3, sr);
       }
       const dPop = Math.exp(-1 / (0.006 * sr));
+      const dMech = Math.exp(-1 / (0.0018 * sr));
+      const mech = (p.mech ?? 0.05) * (0.25 + 0.75 * clamp(rN, 0, 1));
+      // V-moteurs : chaque banc a sa sortie d'échappement, légèrement écartées dans l'espace stéréo
+      const width = p.bank && p.bank.some((x) => x) ? 0.22 : 0;
       const dClk = Math.exp(-1 / (0.0007 * sr));
       const starter = P.starter;
       const drive = p.drive;
@@ -215,6 +227,7 @@
 
         const noise = Math.random() * 2 - 1;
         let sig = 0;
+        let diff = 0;
         for (let b = 0; b < 2; b++) {
           this.s1[b] *= d1;
           this.s2[b] *= d2;
@@ -231,6 +244,7 @@
             y = this.dBuf[r];
           }
           sig += y;
+          diff += b ? -y : y;
         }
         if (this.dLen > 1) this.dIdx = (this.dIdx + 1) % (this.dLen + 1);
 
@@ -281,7 +295,18 @@
           x += st * starter * p.starter.amt * (0.6 + 0.4 * cmp) * 0.22;
         }
 
-        out[i] = this.hp.run(x) * p.gain;
+        // bruit mécanique (distribution), surtout audible à haut régime
+        if (this.mechEnv > 1e-4) {
+          x += this.mechHP.run(noise) * this.mechEnv * mech;
+          this.mechEnv *= dMech;
+        }
+
+        const y = this.hp.run(x) * p.gain;
+        if (R) {
+          this.side = width ? this.lpS.run(this.hpS.run(Math.tanh(diff * drive) * norm)) * width * p.gain : 0;
+          out[i] = y + this.side;
+          R[i] = y - this.side;
+        } else out[i] = y;
       }
     }
 

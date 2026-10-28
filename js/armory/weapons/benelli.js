@@ -4,8 +4,7 @@ export default {
   id: 'benelli',
   maker: 'Benelli',
   name: 'Benelli M4 Super 90',
-  short: 'M4 Super 90',
-  mark: 'M4',
+  short: 'Benelli M4',
   type: 'shotgun',
   // Modèle 3D (assets/models/selection.json).
   model: {

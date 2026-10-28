@@ -16,7 +16,6 @@ const ACC = {
   sd: { file: 'assets/models/suppressors.glb', keep: /^Object_4$/, length: 0.316, center: true },
 };
 
-const BLACK = () => new THREE.MeshStandardMaterial({ color: 0x17181a, roughness: 0.55, metalness: 0.35 });
 const BRASS = new THREE.MeshStandardMaterial({ color: 0xc9a04a, roughness: 0.3, metalness: 1 });
 const HULL = new THREE.MeshStandardMaterial({ color: 0x9c1b18, roughness: 0.5, metalness: 0.1 });
 
@@ -111,90 +110,294 @@ function solidBox(root) {
   return box;
 }
 
-// Empreinte du fond d'un chargeur : sommets à moins de 8 mm du point le plus bas.
-function magFoot(mag) {
+// Fond d'un chargeur dans son propre axe (chargeurs courbes / inclinés compris) : centre, largeur
+// (dans le plan de tir), épaisseur et angle d'inclinaison, à partir des sommets les plus bas le long de l'axe.
+function magFoot(mag, axis) {
   mag.updateMatrixWorld(true);
+  const a = new THREE.Vector3(axis[0], axis[1], 0).normalize();
+  const t = new THREE.Vector3(-a.y, a.x, 0); // perpendiculaire dans le plan de tir
   const v = new THREE.Vector3();
-  let minY = Infinity;
   const pts = [];
+  let far = -Infinity;
   mag.traverse((m) => {
-    if (!m.isMesh) return;
+    if (!m.isMesh || !m.visible) return;
     const pos = m.geometry.attributes.position;
     const idx = m.geometry.index;
     const n = idx ? idx.count : pos.count;
     for (let i = 0; i < n; i += 1) {
       v.fromBufferAttribute(pos, idx ? idx.getX(i) : i).applyMatrix4(m.matrixWorld);
-      pts.push(v.x, v.y, v.z);
-      if (v.y < minY) minY = v.y;
+      const d = v.dot(a);
+      pts.push(v.x, v.y, v.z, d);
+      if (d > far) far = d;
     }
   });
-  const box = new THREE.Box3();
-  for (let i = 0; i < pts.length; i += 3) if (pts[i + 1] < minY + 0.008) box.expandByPoint(v.set(pts[i], pts[i + 1], pts[i + 2]));
-  return box;
+  let t0 = Infinity; let t1 = -Infinity; let z0 = Infinity; let z1 = -Infinity;
+  const c = new THREE.Vector3();
+  let k = 0;
+  for (let i = 0; i < pts.length; i += 4) {
+    if (pts[i + 3] < far - 0.014) continue; // bande de 14 mm : fonds arrondis compris
+    v.set(pts[i], pts[i + 1], pts[i + 2]);
+    const u = v.dot(t);
+    t0 = Math.min(t0, u); t1 = Math.max(t1, u);
+    z0 = Math.min(z0, v.z); z1 = Math.max(z1, v.z);
+    c.add(v);
+    k += 1;
+  }
+  c.divideScalar(Math.max(1, k));
+  // ramène le centre sur la face inférieure, au milieu de l'empreinte
+  const mid = (t0 + t1) / 2;
+  c.addScaledVector(t, mid - c.dot(t)).addScaledVector(a, far - c.dot(a));
+  c.z = (z0 + z1) / 2;
+  return { center: c, w: Math.max(0.016, t1 - t0), d: Math.max(0.014, z1 - z0), angle: Math.atan2(a.x, -a.y) };
 }
 
 const inBox = (b) => (v) => v.x >= b.x[0] && v.x <= b.x[1] && v.y >= b.y[0] && v.y <= b.y[1];
 
-// Pièces simples sans modèle dédié (lampes, compensateur, poignées courtes, talon de chargeur).
+// ---------- pièces sans modèle dédié (lampes, compensateur, poignées, talon, extension de tube) ----------
+// Formes de révolution (LatheGeometry) et profils extrudés biseautés : pas de « blocs » bruts.
+
+const MAT = {
+  ano: () => new THREE.MeshPhysicalMaterial({ color: 0x1a1b1d, roughness: 0.42, metalness: 0.75, clearcoat: 0.25, clearcoatRoughness: 0.5 }),
+  poly: () => new THREE.MeshStandardMaterial({ color: 0x18191b, roughness: 0.78, metalness: 0.05 }),
+  steel: () => new THREE.MeshStandardMaterial({ color: 0x2c2e31, roughness: 0.3, metalness: 1 }),
+  bore: () => new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.9, metalness: 0.2, side: THREE.DoubleSide }),
+  chrome: () => new THREE.MeshStandardMaterial({ color: 0xe8ecf0, roughness: 0.06, metalness: 1 }),
+};
+
 function cylinder(r0, r1, len, mat) {
   const m = new THREE.Mesh(new THREE.CylinderGeometry(r1, r0, len, 28), mat);
   m.rotation.z = -Math.PI / 2; // axe le long de +X
   return m;
 }
 
+// Profil [rayon, x] tourné autour de l'axe +X (faces visibles des deux côtés : profils ouverts).
+function lathe(profile, mat, seg = 40) {
+  mat.side = THREE.DoubleSide;
+  const g = new THREE.LatheGeometry(profile.map(([r, x]) => new THREE.Vector2(r, x)), seg);
+  const m = new THREE.Mesh(g, mat);
+  m.rotation.z = -Math.PI / 2; // axe de révolution Y → +X
+  return m;
+}
+
+// Rectangle arrondi extrudé et biseauté : w (x) × h (y), épaisseur d (z), centré.
+function rounded(w, h, d, r, mat, bevel = 0.0012) {
+  const s = new THREE.Shape();
+  const x = -w / 2 + bevel;
+  const y = -h / 2 + bevel;
+  const W = w - bevel * 2;
+  const H = h - bevel * 2;
+  const rr = Math.min(r, W / 2, H / 2);
+  s.moveTo(x + rr, y);
+  s.lineTo(x + W - rr, y);
+  s.quadraticCurveTo(x + W, y, x + W, y + rr);
+  s.lineTo(x + W, y + H - rr);
+  s.quadraticCurveTo(x + W, y + H, x + W - rr, y + H);
+  s.lineTo(x + rr, y + H);
+  s.quadraticCurveTo(x, y + H, x, y + H - rr);
+  s.lineTo(x, y + rr);
+  s.quadraticCurveTo(x, y, x + rr, y);
+  const g = new THREE.ExtrudeGeometry(s, { depth: d - bevel * 2, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 2, curveSegments: 6 });
+  g.translate(0, 0, -(d - bevel * 2) / 2);
+  return new THREE.Mesh(g, mat);
+}
+
+// Collier Picatinny : semelle + mâchoire + vis de serrage.
+function railClamp(len, mat, screw = true) {
+  const g = new THREE.Group();
+  const base = rounded(len, 0.007, 0.024, 0.0015, mat);
+  base.position.y = -0.0035;
+  g.add(base);
+  for (const z of [-0.0105, 0.0105]) {
+    const lip = rounded(len, 0.004, 0.0035, 0.001, mat, 0.0006);
+    lip.position.set(0, 0.0005, z);
+    g.add(lip);
+  }
+  if (screw) {
+    const s = new THREE.Mesh(new THREE.CylinderGeometry(0.0042, 0.0042, 0.004, 18), MAT.steel());
+    s.rotation.x = Math.PI / 2;
+    s.position.set(0, -0.0035, 0.0135);
+    g.add(s);
+  }
+  return g;
+}
+
+// Optique de lampe : réflecteur chromé, LED, verre légèrement teinté (émissif quand allumée).
+function lampFace(r, x) {
+  const g = new THREE.Group();
+  const refl = lathe([[0.0012, x - 0.009], [r * 0.55, x - 0.006], [r * 0.92, x - 0.0015], [r * 0.92, x - 0.0012]], MAT.chrome(), 32);
+  const led = new THREE.Mesh(new THREE.CircleGeometry(0.0016, 12), new THREE.MeshBasicMaterial({ color: 0xfff6c8 }));
+  led.rotation.y = Math.PI / 2;
+  led.position.x = x - 0.0085;
+  const lens = new THREE.Mesh(new THREE.CircleGeometry(r * 0.93, 32), new THREE.MeshPhysicalMaterial({
+    color: 0x9fb4c6, emissive: 0xfff4dc, emissiveIntensity: 0, roughness: 0.05, metalness: 0, transparent: true, opacity: 0.35, clearcoat: 1,
+  }));
+  lens.rotation.y = Math.PI / 2;
+  lens.position.x = x - 0.0011;
+  g.add(refl, led, lens);
+  return { g, lens };
+}
+
+// Lampes (repère : collier de rail en y = 0, faisceau vers +X).
 function flashlight(kind) {
   const g = new THREE.Group();
-  const mat = BLACK();
+  const ano = MAT.ano();
+  let face;
   if (kind === 'pistol') {
-    const body = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.026, 0.03), mat);
-    body.position.set(0.03, -0.013, 0);
-    const head = cylinder(0.0145, 0.0145, 0.028, mat);
-    head.position.set(0.074, -0.017, 0);
-    g.add(body, head);
-    g.userData.emit = new THREE.Vector3(0.089, -0.017, 0);
+    // SureFire X300 Ultra : corps à facettes, tête Ø 32 mm, collier T-slot intégré, palettes arrière.
+    const body = rounded(0.058, 0.026, 0.03, 0.006, ano, 0.0018);
+    body.position.set(0.03, -0.019, 0);
+    const top = rounded(0.046, 0.008, 0.022, 0.002, ano);
+    top.position.set(0.034, -0.004, 0);
+    const neck = lathe([[0.0125, 0.055], [0.0135, 0.062], [0.0155, 0.068]], ano);
+    const head = lathe([[0.0155, 0.068], [0.016, 0.084], [0.0162, 0.085], [0.0162, 0.0885], [0.0148, 0.0895], [0.0135, 0.0895]], ano);
+    for (const n of [neck, head]) n.position.y = -0.019;
+    const pads = [-1, 1].map((sd) => {
+      const p = rounded(0.012, 0.016, 0.004, 0.003, MAT.poly(), 0.0008);
+      p.position.set(0.004, -0.017, sd * 0.016);
+      return p;
+    });
+    const screw = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.003, 16), MAT.steel());
+    screw.rotation.x = Math.PI / 2;
+    screw.position.set(0.04, -0.005, 0.0125);
+    g.add(body, top, neck, head, ...pads, screw);
+    face = lampFace(0.0135, 0.0895);
+    face.g.position.y = -0.019;
+    g.userData.emit = new THREE.Vector3(0.09, -0.019, 0);
   } else {
-    const clamp = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.012, 0.022), mat);
-    clamp.position.set(0.05, -0.006, 0);
-    const body = cylinder(0.0125, 0.0125, 0.1, mat);
-    body.position.set(0.05, -0.025, 0);
-    const head = cylinder(0.0125, 0.017, 0.034, mat);
-    head.position.set(0.117, -0.025, 0);
-    g.add(clamp, body, head);
-    g.userData.emit = new THREE.Vector3(0.135, -0.025, 0);
+    // SureFire Scout M600 : tube Ø 25,4 mm, tête Ø 30 mm moletée, interrupteur arrière, embase déportée.
+    const yc = -0.024;
+    const prof = [
+      [0, 0], [0.0085, 0], [0.0105, 0.002], [0.0115, 0.006], [0.0118, 0.016], [0.0112, 0.018], [0.0127, 0.02],
+      [0.0127, 0.074], [0.0134, 0.078], [0.015, 0.088], [0.015, 0.1], [0.0144, 0.1012], [0.0152, 0.102],
+      [0.0152, 0.1105], [0.0138, 0.112], [0.0128, 0.112],
+    ];
+    const tube = lathe(prof, ano, 48);
+    tube.position.y = yc;
+    // moletage de la tête : bagues fines
+    for (let i = 0; i < 5; i += 1) {
+      const ring = lathe([[0.0151, 0.0895 + i * 0.002], [0.0154, 0.090 + i * 0.002], [0.0151, 0.0905 + i * 0.002]], ano, 32);
+      ring.position.y = yc;
+      g.add(ring);
+    }
+    const cap = lathe([[0, -0.004], [0.006, -0.004], [0.0075, -0.002], [0.0078, 0.001]], new THREE.MeshStandardMaterial({ color: 0x0c0c0d, roughness: 0.9 }), 24);
+    cap.position.y = yc;
+    const arm = rounded(0.03, 0.014, 0.014, 0.003, ano);
+    arm.position.set(0.048, -0.008, 0);
+    const clamp = railClamp(0.034, ano);
+    clamp.position.set(0.048, 0, 0);
+    g.add(tube, cap, arm, clamp);
+    face = lampFace(0.0128, 0.112);
+    face.g.position.y = yc;
+    g.userData.emit = new THREE.Vector3(0.112, yc, 0);
   }
-  const lens = new THREE.Mesh(new THREE.CircleGeometry(kind === 'pistol' ? 0.012 : 0.015, 24),
-    new THREE.MeshStandardMaterial({ color: 0x222831, emissive: 0xfff4dc, emissiveIntensity: 0, roughness: 0.1 }));
-  lens.rotation.y = Math.PI / 2;
-  lens.position.copy(g.userData.emit).add(new THREE.Vector3(0.0005, 0, 0));
-  g.add(lens);
-  g.userData.lens = lens;
+  g.add(face.g);
+  g.userData.lens = face.lens;
   return g;
 }
 
+// Compensateur ajouré : vrais évents (tube ouvert sur le dessus), âme noire, épaulement fileté.
 function compensator(r) {
   const g = new THREE.Group();
-  const steel = new THREE.MeshStandardMaterial({ color: 0x3a3d41, roughness: 0.35, metalness: 1 });
-  const body = cylinder(r + 0.0015, r + 0.0015, 0.046, steel);
-  body.position.x = 0.023;
-  g.add(body);
-  for (const x of [0.012, 0.023, 0.034]) {
-    const port = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.004, (r + 0.0016) * 2), BLACK());
-    port.position.set(x, r * 0.7, 0);
-    g.add(port);
+  const steel = MAT.steel();
+  steel.side = THREE.DoubleSide;
+  const R = r + 0.0035;
+  const L = 0.05;
+  const ports = [[0.012, 0.019], [0.023, 0.03], [0.034, 0.041]];
+  const open = 1.2; // ouverture angulaire des évents (rad), centrée sur le dessus
+  let x = 0;
+  const seg = (x0, x1, partial) => {
+    const geo = partial
+      ? new THREE.CylinderGeometry(R, R, x1 - x0, 40, 1, true, Math.PI * 1.5 + open / 2, Math.PI * 2 - open)
+      : new THREE.CylinderGeometry(R, R, x1 - x0, 40, 1, true);
+    const m = new THREE.Mesh(geo, steel);
+    m.rotation.z = -Math.PI / 2;
+    m.position.x = (x0 + x1) / 2;
+    g.add(m);
+    if (partial) {
+      // flancs des évents
+      for (const xx of [x0, x1]) {
+        const ring = new THREE.Mesh(new THREE.RingGeometry(r * 0.75, R, 40, 1, Math.PI / 2 + open / 2, Math.PI * 2 - open), steel);
+        ring.rotation.y = Math.PI / 2;
+        ring.position.x = xx;
+        g.add(ring);
+      }
+    }
+  };
+  for (const [p0, p1] of ports) {
+    seg(x, p0, false);
+    seg(p0, p1, true);
+    x = p1;
+  }
+  seg(x, L, false);
+  const bore = lathe([[r * 0.75, 0], [r * 0.75, L]], MAT.bore(), 24);
+  const front = lathe([[r * 0.75, L], [R - 0.0015, L], [R, L - 0.0015]], steel, 40);
+  const back = lathe([[r + 0.0005, -0.006], [R - 0.0008, -0.006], [R - 0.0008, 0], [R, 0.0008]], steel, 40);
+  g.add(bore, front, back);
+  return g;
+}
+
+// Poignées avant (repère : rail en y = 0, la poignée pend vers -Y).
+function smallGrip(kind) {
+  const mat = MAT.poly();
+  const g = new THREE.Group();
+  const clamp = railClamp(kind === 'stubby' ? 0.036 : 0.032, mat, false);
+  g.add(clamp);
+  if (kind === 'stubby') {
+    const prof = [[0, -0.062], [0.013, -0.062], [0.0155, -0.059], [0.016, -0.054]];
+    for (let i = 0; i < 4; i += 1) {
+      const y = -0.054 + i * 0.011;
+      prof.push([0.0152, y + 0.0045], [0.0162, y + 0.0085]);
+    }
+    prof.push([0.0142, -0.011], [0.012, -0.007], [0, -0.007]);
+    const body = new THREE.Mesh(new THREE.LatheGeometry(prof.map(([r, y]) => new THREE.Vector2(r, y)), 36), mat);
+    g.add(body);
+  } else {
+    // butée de main : profil en crochet extrudé
+    const s = new THREE.Shape();
+    s.moveTo(-0.022, -0.006);
+    s.lineTo(0.014, -0.006);
+    s.quadraticCurveTo(0.02, -0.007, 0.02, -0.013);
+    s.lineTo(0.017, -0.026);
+    s.quadraticCurveTo(0.0155, -0.029, 0.012, -0.027);
+    s.quadraticCurveTo(0.004, -0.018, -0.022, -0.012);
+    s.lineTo(-0.022, -0.006);
+    const geo = new THREE.ExtrudeGeometry(s, { depth: 0.018, bevelEnabled: true, bevelThickness: 0.0015, bevelSize: 0.0012, bevelSegments: 3, curveSegments: 10 });
+    geo.translate(0, 0, -0.009);
+    g.add(new THREE.Mesh(geo, mat));
   }
   return g;
 }
 
-function smallGrip(kind) {
-  const mat = BLACK();
-  if (kind === 'stubby') {
-    const m = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.014, 0.058, 24), mat);
-    m.position.y = -0.031;
-    return m;
-  }
-  const m = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.018, 0.024), mat);
-  m.position.y = -0.009;
-  return m;
+// Talon de chargeur étendu : rehausse (couleur du chargeur) + semelle aluminium biseautée, dans l'axe du chargeur.
+function magPad(foot, ext = 0.018) {
+  const g = new THREE.Group();
+  const sleeve = rounded(foot.w, ext, foot.d, 0.003, MAT.poly(), 0.0008);
+  sleeve.position.y = -ext / 2 + 0.001;
+  const alu = new THREE.MeshPhysicalMaterial({ color: 0xb9bec4, roughness: 0.28, metalness: 1, clearcoat: 0.6, clearcoatRoughness: 0.2 });
+  const plate = rounded(foot.w * 1.1 + 0.004, 0.008, foot.d * 1.12 + 0.002, 0.004, alu, 0.0022);
+  plate.position.y = -ext - 0.003;
+  plate.userData.pad = true;
+  // lèvre avant de préhension
+  const lip = rounded(0.006, 0.011, foot.d * 1.12 + 0.002, 0.0025, alu, 0.0018);
+  lip.position.set(foot.w * 0.55 + 0.004, -ext - 0.0045, 0);
+  lip.userData.pad = true;
+  g.add(lip);
+  g.add(sleeve, plate);
+  g.rotation.z = foot.angle;
+  return g;
+}
+
+// Extension de magasin tubulaire : tube, bouchon et collier sur le canon.
+function tubeExt(len, rTube, gap) {
+  const g = new THREE.Group();
+  const ano = MAT.ano();
+  g.add(lathe([[rTube, 0], [rTube, len - 0.012], [rTube + 0.0012, len - 0.011], [rTube + 0.0012, len - 0.002], [rTube - 0.001, len], [0, len]], ano, 36));
+  const clampMat = MAT.steel();
+  const c1 = lathe([[rTube + 0.0022, len - 0.03], [rTube + 0.0022, len - 0.018]], clampMat, 36);
+  const bridge = rounded(0.012, gap, 0.012, 0.002, clampMat);
+  bridge.position.set(len - 0.024, gap / 2, 0);
+  g.add(c1, bridge);
+  return g;
 }
 
 export class ArmoryScene {
@@ -403,10 +606,44 @@ export class ArmoryScene {
     ray.set(o, d);
     ray.far = 0.5;
     r.root.updateMatrixWorld(true);
-    const hit = ray.intersectObject(r.body, true).find((h) => h.object.visible && !h.object.userData.acc);
+    // le chargeur (souvent courbé sous le garde-main) n'est pas une surface de montage
+    const mag = r.parts.mag;
+    const onMag = (o) => { for (let q = o; q; q = q.parent) if (q === mag) return true; return false; };
+    const hit = ray.intersectObject(r.body, true).find((h) => h.object.visible && !h.object.userData.acc && !(mag && onMag(h.object)));
     if (!hit) return p.clone();
     const q = r.body.worldToLocal(hit.point.clone());
     return q;
+  }
+
+  // Bout avant du magasin tubulaire (sous le canon) : sommets les plus en avant dans la bande du tube.
+  tubeEnd(r) {
+    const tip = r.tip;
+    const v = new THREE.Vector3();
+    let best = null;
+    r.body.updateMatrixWorld(true);
+    const inv = new THREE.Matrix4().copy(r.body.matrixWorld).invert();
+    for (const m of meshesOf(r.body)) {
+      if (m.userData.acc) continue;
+      const mat = new THREE.Matrix4().multiplyMatrices(inv, m.matrixWorld);
+      const p = m.geometry.attributes.position;
+      for (let i = 0; i < p.count; i += 1) {
+        v.fromBufferAttribute(p, i).applyMatrix4(mat);
+        if (v.y < tip.y - 0.016 && v.y > tip.y - 0.045 && Math.abs(v.z - tip.z) < 0.02 && (!best || v.x > best.x)) best = v.clone();
+      }
+    }
+    const x = best ? best.x : tip.x - 0.1;
+    // rayon et axe du tube : sommets proches de ce bout
+    let y0 = Infinity; let y1 = -Infinity;
+    for (const m of meshesOf(r.body)) {
+      const mat = new THREE.Matrix4().multiplyMatrices(inv, m.matrixWorld);
+      const p = m.geometry.attributes.position;
+      for (let i = 0; i < p.count; i += 1) {
+        v.fromBufferAttribute(p, i).applyMatrix4(mat);
+        if (v.x > x - 0.01 && v.x < x - 0.002 && v.y < tip.y - 0.012 && v.y > tip.y - 0.05 && Math.abs(v.z - tip.z) < 0.02) { y0 = Math.min(y0, v.y); y1 = Math.max(y1, v.y); }
+      }
+    }
+    const ok = y1 > y0;
+    return { x, y: ok ? (y0 + y1) / 2 : tip.y - 0.027, z: tip.z, r: ok ? Math.min(0.014, Math.max(0.008, (y1 - y0) / 2)) : 0.011 };
   }
 
   async mount(r, c, token) {
@@ -448,17 +685,12 @@ export class ArmoryScene {
     }
     if (c.mag === 'ext' && !r.parts.magExt) {
       if (w.capacity.tube) {
-        want.set('magx', { key: 'tubeExt', pos: tip.clone().add(new THREE.Vector3(-0.06, -0.027, 0)), make: () => cylinder(0.011, 0.011, 0.07, BLACK()), parent: null });
+        const t = r.tube || (r.tube = this.tubeEnd(r));
+        const len = Math.max(0.04, tip.x - 0.012 - t.x);
+        want.set('magx', { key: 'tubeExt', pos: new THREE.Vector3(t.x - 0.004, t.y, t.z), make: () => tubeExt(len + 0.004, t.r, Math.max(0.004, tip.y - t.y - (mm.muzzle.r || 10) / 1000)) });
       } else if (r.parts.mag) {
-        const b = magFoot(r.parts.mag); // empreinte du fond du chargeur (chargeurs courbes compris)
-        const p = r.body.worldToLocal(new THREE.Vector3((b.min.x + b.max.x) / 2, b.min.y, (b.min.z + b.max.z) / 2));
-        want.set('magx', { key: 'pad', pos: p, parent: 'mag', make: () => {
-          const m = new THREE.Mesh(new THREE.BoxGeometry(Math.max(0.02, b.max.x - b.min.x) * 0.98, 0.014, Math.max(0.018, b.max.z - b.min.z) * 0.98),
-            new THREE.MeshStandardMaterial({ color: 0xb9bec4, roughness: 0.3, metalness: 1 }));
-          m.position.y = -0.007;
-          m.userData.pad = true;
-          return m;
-        } });
+        const f = r.foot || (r.foot = magFoot(r.parts.mag, mm.magAxis || [0, -1]));
+        want.set('magx', { key: 'pad', pos: r.body.worldToLocal(f.center.clone()), parent: 'mag', make: () => magPad(f) });
       }
     }
 
@@ -496,6 +728,15 @@ export class ArmoryScene {
     this.emitLaser = lz ? lz.obj : null;
   }
 
+  // Pièce seule, hors arme (vignettes du menu de personnalisation : tools/thumbs.cjs).
+  async accessory(key) {
+    const make = {
+      'light:pistol': () => flashlight('pistol'), 'light:rifle': () => flashlight('rifle'),
+      comp: () => compensator(0.009), stubby: () => smallGrip('stubby'), handstop: () => smallGrip('handstop'),
+    };
+    return make[key] ? make[key]() : this.part(key);
+  }
+
   // ---------- caméra ----------
 
   frame(instant) {
@@ -507,7 +748,7 @@ export class ArmoryScene {
     const ctr = b.getCenter(new THREE.Vector3());
     const len = b.max.x - b.min.x;
     const hfov = 2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2) * cam.aspect);
-    const d = Math.max((len * 0.62) / Math.tan(hfov / 2), ((b.max.y - b.min.y) * 0.9) / Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2));
+    const d = Math.max((len * 0.55) / Math.tan(hfov / 2), ((b.max.y - b.min.y) * 0.9) / Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2));
     const dir = new THREE.Vector3(0.16, 0.1, 1).normalize();
     const pos = ctr.clone().addScaledVector(dir, d);
     st.controls.minDistance = d * 0.45;

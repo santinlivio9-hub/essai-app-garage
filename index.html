@@ -32,20 +32,10 @@
       </header>
 
       <div class="studio" id="studio">
-        <div class="studio-mark" id="studio-mark" aria-hidden="true"></div>
         <canvas class="stage-3d" id="stage-3d" role="img" aria-label="Véhicule sélectionné, vue 3D orientable"></canvas>
         <div class="loader" id="g-loader" aria-hidden="true"><i></i><span>Chargement 3D</span></div>
         <p class="no-3d-msg">Vue 3D indisponible sur cet appareil (WebGL désactivé).</p>
-        <div class="studio-hud">
-          <div class="car-title">
-            <span class="brand" id="car-brand"></span>
-            <h2 id="car-name"></h2>
-            <span class="gen" id="car-gen"></span>
-          </div>
-          <div class="hud-right"><span class="counter" id="car-counter"></span></div>
-        </div>
-        <div class="badges" id="badges"></div>
-        <div class="dots" id="dots"></div>
+        <div class="studio-hud"><h2 class="title" id="car-name"></h2></div>
         <div class="hint" id="hint">↻ glisser pour tourner · pincer pour zoomer</div>
         <div class="audio-warn glass" id="audio-warn">Son indisponible sur ce navigateur</div>
         <button class="restore glass" id="restore" type="button">︿ Commandes</button>
@@ -53,12 +43,15 @@
 
       <div class="deck" id="deck">
         <div class="engine-bar">
-          <div class="tach glass" id="tach" aria-label="Compte-tours"></div>
-          <button class="btn-start" id="btn-start" type="button" aria-pressed="false"><span><b>START</b><small>ENGINE</small></span></button>
-          <button class="btn-gas glass" id="btn-gas" type="button" disabled>
+          <div class="tach" id="tach" aria-label="Compte-tours"></div>
+          <button class="push" id="btn-start" type="button" aria-pressed="false" aria-label="Démarrer le moteur">
+            <span class="push-led" aria-hidden="true"></span>
+            <span class="push-cap"><small>ENGINE</small><b>START</b><small class="push-sub">STOP</small></span>
+          </button>
+          <button class="btn-gas" id="btn-gas" type="button" disabled aria-label="Accélérateur — maintenir">
             <span class="fill" id="gas-fill"></span>
-            <span class="lbl"><b>Coup de gaz</b><small>Maintenir · tapoter</small></span>
-            <span class="pedal" aria-hidden="true"></span>
+            <span class="lbl"><small>Accélérateur</small><b id="gas-pct">0<i>%</i></b><em><span class="on">Maintenir · tapoter</span><span class="off">Moteur coupé</span></em></span>
+            <span class="pedal" aria-hidden="true"><svg viewBox="0 0 40 60"><defs><linearGradient id="pd-al" x1="0" x2="1"><stop offset="0" stop-color="#7d838b"/><stop offset=".45" stop-color="#e9edf1"/><stop offset="1" stop-color="#8a9098"/></linearGradient></defs><rect x="3" y="2" width="34" height="56" rx="7" fill="url(#pd-al)"/><rect x="3.5" y="2.5" width="33" height="55" rx="6.5" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".8"/><g fill="#1b1d20"><rect x="9" y="8" width="22" height="3.2" rx="1.6"/><rect x="9" y="15" width="22" height="3.2" rx="1.6"/><rect x="9" y="22" width="22" height="3.2" rx="1.6"/><rect x="9" y="29" width="22" height="3.2" rx="1.6"/><rect x="9" y="36" width="22" height="3.2" rx="1.6"/><rect x="9" y="43" width="22" height="3.2" rx="1.6"/></g><g fill="#2a2d31"><circle cx="8" cy="52" r="1.6"/><circle cx="32" cy="52" r="1.6"/><circle cx="20" cy="52" r="1.6"/></g></svg></span>
           </button>
         </div>
         <div class="custom">
@@ -95,27 +88,20 @@
       </header>
 
       <div class="studio studio-armory" id="a-studio">
-        <div class="studio-mark" id="a-mark" aria-hidden="true"></div>
         <canvas class="stage-3d" id="stage-arm" role="img" aria-label="Arme sélectionnée, vue 3D orientable"></canvas>
         <div class="loader" id="a-loader" aria-hidden="true"><i></i><span>Chargement 3D</span></div>
         <p class="no-3d-msg">Vue 3D indisponible sur cet appareil (WebGL désactivé).</p>
-        <div class="studio-hud">
-          <div class="car-title">
-            <span class="brand" id="a-maker"></span>
-            <h2 id="a-name"></h2>
-            <span class="gen" id="a-variant"></span>
-          </div>
-          <div class="hud-right"><span class="counter" id="a-counter"></span></div>
-        </div>
-        <div class="badges" id="a-badges"></div>
-        <div class="dots" id="a-dots"></div>
+        <div class="studio-hud"><h2 class="title" id="a-name"></h2></div>
         <button class="restore glass" id="a-restore" type="button">︿ Commandes</button>
       </div>
 
       <div class="deck" id="a-deck">
-        <div class="grid items-center gap-2 h-[74px] grid-cols-[100px_66px_minmax(0,1fr)]">
+        <div class="grid items-center gap-2 h-[78px] grid-cols-[96px_76px_minmax(0,1fr)]">
           <div class="target glass" id="a-target" role="button" aria-label="Cible — toucher pour effacer"></div>
-          <button class="btn-fire" id="a-fire" type="button" aria-label="Tirer"><span><b>FIRE</b><small>TIRER</small></span></button>
+          <button class="push push-fire" id="a-fire" type="button" aria-label="Tirer">
+            <span class="push-led" aria-hidden="true"></span>
+            <span class="push-cap"><b>FIRE</b><small>TIRER</small></span>
+          </button>
           <div class="grid grid-rows-2 gap-1.5 h-full min-w-0">
             <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-1.5 min-w-0">
               <div class="ammo glass" id="a-ammo" aria-live="polite"></div>

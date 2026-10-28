@@ -1,9 +1,10 @@
 // Synthèse des sons d'armes (Web Audio). Aucun échantillon : chaque son est calculé
 // dans le navigateur puis mis en cache sous forme d'AudioBuffer.
 //
-// Détonation = attaque de souffle très brève (bruit filtré) + « boom » grave en glissando
-// + claquement supersonique (onde en N) pour le 5,56 + résonance métallique de la culasse
-// (modes amortis inharmoniques) + queue d'écho (réverbération de stand).
+// Détonation = onde de choc de bouche (Friedlander) + souffle des gaz (bruit filtré, deux temps)
+// + coup sourd grave en glissando + claquement supersonique (onde en N) pour le 5,56
+// + résonance métallique de la culasse (modes amortis inharmoniques), le tout saturé en douceur,
+// puis queue d'écho (réverbération de stand en béton).
 // Silencieux : souffle fortement atténué et assourdi (« thwip ») — la mécanique ressort.
 import { unlockAudio } from '../core/audio.js';
 
@@ -74,43 +75,67 @@ const MECH = {
   shotgun: { freqs: [980, 1720, 2860, 4200], taus: [0.03, 0.02, 0.012, 0.008] },
 };
 
+// Durée de la phase positive de l'onde de choc de bouche (Friedlander), par famille d'arme.
+const PULSE = { pistol: 0.0011, smg: 0.0013, rifle: 0.0016, shotgun: 0.0024 };
+
+// Saturation douce : ramène les crêtes tout en gardant l'attaque — c'est ce qui fait « claquer ».
+function drive(a, k) {
+  const n = Math.tanh(k);
+  for (let i = 0; i < a.length; i++) a[i] = Math.tanh(a[i] * k) / n;
+}
+
 export function synthShot(sr, snd, { suppressed = false, comp = false, subsonic = false } = {}) {
-  const len = Math.floor(0.5 * sr);
+  const len = Math.floor(0.55 * sr);
   const out = new Float32Array(len);
   const tau = snd.blastTau * (suppressed ? 1.5 : 1);
-  const lp1 = new Filt('lp', suppressed ? 850 : snd.lp * (comp ? 1.2 : 1), 0.7, sr);
-  const lp2 = new Filt('lp', suppressed ? 1100 : snd.lp * 1.4, 0.6, sr);
-  const hp = new Filt('hp', suppressed ? 140 : 70, 0.7, sr);
+  const lp1 = new Filt('lp', suppressed ? 850 : snd.lp * (comp ? 1.25 : 1.1), 0.7, sr);
+  const lp2 = new Filt('lp', suppressed ? 1100 : snd.lp * 1.6, 0.6, sr);
+  const hp = new Filt('hp', suppressed ? 140 : 90, 0.7, sr);
   const pf = new Filt('bp', 2100, 1.1, sr);
   const blastG = suppressed ? 0.11 : comp ? 1.25 : 1;
   const [f0, f1, btau] = snd.boom;
+  const T = (PULSE[snd.kind] || PULSE.pistol) * (comp ? 0.85 : 1);
+  const pulseLp = new Filt('lp', suppressed ? 700 : 9000, 0.7, sr);
+  const bodyLp = new Filt('lp', 260, 0.8, sr);
+  const snapHp = new Filt('hp', 1800, 0.7, sr);
   let ph = 0;
   for (let i = 0; i < len; i++) {
     const t = i / sr;
-    const atk = 1 - Math.exp(-t / 0.00022);
-    // souffle de bouche
+    const atk = 1 - Math.exp(-t / 0.00015);
     const n = rnd();
-    let b = hp.run(lp2.run(lp1.run(n))) * atk * Math.exp(-t / tau) * 2.2 * blastG;
+    // 1) onde de choc de bouche (Friedlander) : crête positive raide puis dépression
+    const x = t / T;
+    const pulse = x < 6 ? (1 - x) * Math.exp(-1.6 * x) : 0;
+    let b = pulseLp.run(pulse) * (suppressed ? 0.12 : 2.6) * (comp ? 1.15 : 1);
+    // 2) souffle des gaz : craquement large bande très bref + corps plus long
+    const gas = hp.run(lp2.run(lp1.run(n)));
+    b += gas * atk * (Math.exp(-t / 0.0035) * 2.4 + Math.exp(-t / tau) * 1.5) * blastG;
+    // « claque » : éclat aigu de 1 à 2 ms, celui qui fait sursauter
+    if (!suppressed) b += snapHp.run(n) * Math.exp(-t / 0.0013) * 2.2 * (comp ? 1.3 : 1);
     // « thwip » des gaz ralentis par les chicanes
     if (suppressed) b += pf.run(n) * Math.exp(-t / 0.0075) * atk * 0.22;
-    // boom grave
-    const fq = f1 + (f0 - f1) * Math.exp(-t / 0.018);
+    // 3) coup sourd dans la poitrine : glissando grave + bruit grave
+    const fq = f1 + (f0 - f1) * Math.exp(-t / 0.016);
     ph += (2 * Math.PI * fq) / sr;
-    b += Math.sin(ph) * Math.exp(-t / btau) * atk * (suppressed ? 0.22 : 0.9);
+    const env = Math.exp(-t / btau) * atk;
+    b += (Math.sin(ph) + 0.35 * Math.sin(2 * ph + 0.6)) * env * (suppressed ? 0.25 : 1.15);
+    b += bodyLp.run(n) * env * (suppressed ? 0.4 : 1.1);
     out[i] = b;
   }
   // claquement supersonique (onde en N) — subsiste même avec un silencieux en 5,56
   if (snd.crack && !subsonic) {
-    const w = Math.floor(0.00035 * sr);
-    const g = suppressed ? 1.4 : 1.6;
-    for (let i = 0; i < w; i++) out[i + 2] += g * (1 - (2 * i) / w);
+    const w = Math.floor(0.00032 * sr);
+    const g = suppressed ? 2.2 : 2.4;
+    for (let i = 0; i <= w; i++) out[i + 1] += g * (1 - (2 * i) / w);
   }
   // mécanique de culasse
   const mech = MECH[snd.kind] || MECH.pistol;
-  const mg = suppressed ? 0.09 : 0.12;
+  const mg = suppressed ? 0.14 : 0.16;
   clank(out, sr, snd.mech[0] + Math.random() * 0.002, { ...mech, gain: mg * 0.8 });
   clank(out, sr, snd.mech[1] + Math.random() * 0.004, { ...mech, gain: mg });
-  return normalize(out, suppressed ? (snd.crack && !subsonic ? 0.5 : 0.22) : 0.95 * (snd.gain || 1) / 1.2);
+  normalize(out, 1);
+  if (!suppressed) drive(out, 2.4);
+  return normalize(out, suppressed ? (snd.crack && !subsonic ? 0.55 : 0.26) : 0.97 * Math.min(1, (snd.gain || 1) / 1.15));
 }
 
 function synthMisc(sr, kind) {
@@ -156,21 +181,26 @@ function synthMisc(sr, kind) {
   }
 }
 
-// Réponse impulsionnelle de stand de tir couvert (premières réflexions + queue diffuse).
-function impulse(ctx, seconds = 1.3) {
+// Réponse impulsionnelle de stand de tir couvert en béton : premières réflexions nettes (sol, murs,
+// plafond), écho de mur du fond (« slap »), queue diffuse dont les aigus s'éteignent plus vite.
+function impulse(ctx, seconds = 1.6) {
   const sr = ctx.sampleRate;
   const len = Math.floor(seconds * sr);
   const buf = ctx.createBuffer(2, len, sr);
   for (let ch = 0; ch < 2; ch++) {
     const d = buf.getChannelData(ch);
-    const lp = new Filt('lp', 5200, 0.6, sr);
+    const bright = new Filt('lp', 6500, 0.6, sr);
+    const dark = new Filt('lp', 1600, 0.6, sr);
     for (let i = 0; i < len; i++) {
       const t = i / sr;
-      d[i] = lp.run(rnd()) * Math.exp(-t / 0.32) * (1 - Math.exp(-t / 0.004));
+      const n = rnd();
+      const k = Math.min(1, t / 0.35);
+      d[i] = (bright.run(n) * (1 - k) + dark.run(n) * k * 1.6) * Math.exp(-t / 0.38) * (1 - Math.exp(-t / 0.006)) * 0.8;
     }
-    for (const [dt, g] of [[0.011, 0.5], [0.019, 0.35], [0.031, 0.3], [0.047, 0.2]]) {
-      const i = Math.floor((dt + ch * 0.002) * sr);
-      d[i] += g;
+    const refl = [[0.006, 0.7], [0.013, 0.55], [0.021, 0.45], [0.029, 0.4], [0.043, 0.3], [0.061, 0.24], [0.118, 0.32], [0.236, 0.14]];
+    for (const [dt, g] of refl) {
+      const i0 = Math.floor((dt + ch * 0.0023 + Math.random() * 0.0008) * sr);
+      for (let j = 0; j < 24; j++) d[i0 + j] += g * (ch ? 0.9 : 1) * Math.exp(-j / 5) * (j % 2 ? -0.5 : 1);
     }
   }
   return buf;
@@ -193,11 +223,12 @@ export class GunAudio {
     this.out = ctx.createGain();
     this.out.gain.value = 0.8;
     const lim = ctx.createDynamicsCompressor();
-    lim.threshold.value = -8;
-    lim.knee.value = 2;
-    lim.ratio.value = 12;
-    lim.attack.value = 0.001;
-    lim.release.value = 0.12;
+    // attaque à 3 ms : la première crête passe (punch), la queue est compactée
+    lim.threshold.value = -12;
+    lim.knee.value = 3;
+    lim.ratio.value = 10;
+    lim.attack.value = 0.003;
+    lim.release.value = 0.15;
     this.verb = ctx.createConvolver();
     this.verb.buffer = impulse(ctx);
     this.wet = ctx.createGain();
@@ -247,7 +278,7 @@ export class GunAudio {
     const subsonic = cfg.muzzle === 'sd';
     const key = `${wpn.id}|${cfg.muzzle}`;
     const b = this.buffer(key, (sr) => synthShot(sr, wpn.sound, { suppressed, comp, subsonic }));
-    this.play(b, { when, rate: 0.97 + Math.random() * 0.06, wet: suppressed ? 0.12 : 0.36 });
+    this.play(b, { when, rate: 0.97 + Math.random() * 0.06, wet: suppressed ? 0.14 : 0.42 });
     // douille qui tombe au sol
     const drop = wpn.type === 'shotgun' ? 'thud' : 'ting';
     this.play(this.buffer(drop, (sr) => synthMisc(sr, drop)), { when: when + 0.38 + Math.random() * 0.25, wet: 0.2, rate: 0.9 + Math.random() * 0.25 });

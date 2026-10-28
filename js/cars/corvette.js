@@ -3,7 +3,7 @@ export default {
   id: 'corvette',
   brand: 'Chevrolet',
   name: 'Corvette C6 Z06',
-  mark: 'Z06',
+  short: 'Corvette',
   gen: 'C6 · LS7 7.0 V8 atmo · Stage 3',
   length: 4460,
   // Modèle 3D (assets/models/selection.json) : matériaux pilotés par l'interface, repérés par leur nom.

@@ -6,7 +6,8 @@ import { GunAudio } from './gun-audio.js';
 import { Target } from './target.js';
 import { Sheet } from '../core/sheet.js';
 import { creditHTML, creditsReady } from '../core/credits.js';
-import { $, esc, load, save, tween, ease } from '../core/util.js';
+import { Picker } from '../core/picker.js';
+import { $, esc, load, save, tween, ease, card, thumb } from '../core/util.js';
 
 const STORE = 'ls-armory-v1';
 const SEGS = [
@@ -112,8 +113,7 @@ export class Armory {
     const c = this.c;
     if (!w.modes.includes(c.mode)) c.mode = 'semi';
     this.applyColors();
-    this.ammo = this.capacity();
-    this.chambered = true;
+    this.fill();
     this.reloading = false;
     // le modèle 3D arrive de façon asynchrone : indicateur pendant le chargement
     this.loader.classList.add('show');
@@ -140,6 +140,14 @@ export class Armory {
     this.updateTexts();
     this.persist();
   }
+
+  // Arme pleine : chargeur garni et une cartouche chambrée, total = capacité affichée (ex. 30/30).
+  fill() {
+    this.ammo = this.capacity() - 1;
+    this.chambered = true;
+  }
+
+  rounds() { return this.ammo + (this.chambered ? 1 : 0); }
 
   capacity() {
     return this.c.mag === 'ext' ? this.w.capacity.ext : this.w.capacity.std;
@@ -177,19 +185,9 @@ export class Armory {
     const w = this.w;
     const s = w.specs;
     const { v0, e } = this.ballistics();
-    $('#a-maker', this.root).textContent = w.maker;
+    // sur la vue 3D : le nom seul (les caractéristiques sont dans la fiche)
     $('#a-name', this.root).textContent = this.displayName();
-    $('#a-variant', this.root).textContent = this.c.muzzle === 'sd' ? 'Modérateur intégral · munition subsonique' : w.variant;
-    $('#a-counter', this.root).textContent = `${String(this.idx + 1).padStart(2, '0')} / ${String(WEAPONS.length).padStart(2, '0')}`;
-    const mark = $('#a-mark', this.root);
-    if (mark.textContent !== w.mark) mark.textContent = w.mark;
-    $('#a-badges', this.root).innerHTML = [
-      [s.caliber.split(' ')[0], 'calibre'], [`${this.capacity()}+1`, 'coups'], [`${e} J`, 'énergie'],
-    ].map(([v, k]) => `<span class="badge">${esc(v)} <small>${k}</small></span>`).join('');
-    $('#a-dots', this.root).innerHTML = WEAPONS.map((_, i) => `<i class="${i === this.idx ? 'on' : ''}"></i>`).join('');
-    for (const b of this.picker.children) b.setAttribute('aria-selected', String(+b.dataset.i === this.idx));
-    const chip = this.picker.children[this.idx];
-    if (chip) this.picker.scrollTo({ left: chip.offsetLeft - (this.picker.clientWidth - chip.offsetWidth) / 2, behavior: 'smooth' });
+    this.picker.select(this.idx);
     $('#a-sum', this.root).textContent = `${s.caliber.split(' ')[0]} · ${v0} m/s · ${e} J`;
     this.renderSheet();
   }
@@ -203,7 +201,7 @@ export class Armory {
     const suppressed = c.muzzle === 'sup' || c.muzzle === 'sd';
     const rows = [
       ['Calibre', s.caliber], ['Fonctionnement', s.action], ['Canon', s.barrel],
-      ['Alimentation', `${this.capacity()} coups${w.capacity.tube ? ' (tube)' : ''} + 1 chambré`],
+      ['Alimentation', `${this.capacity()} coups${w.capacity.tube ? ' (tube)' : ''}`],
       ['Longueur', `≈ ${len} mm`], ['Masse (à vide)', `≈ ${(this.mass() / 1000).toFixed(2).replace('.', ',')} kg`],
       ['Cadence', s.rof ? `${s.rof} coups/min` : 'Coup par coup'], ['Vitesse initiale', `≈ ${v0} m/s`],
       ['Énergie à la bouche', `≈ ${e} J`], ['Modes', w.modes.map((m) => MODE_LABEL[m]).join(' · ')],
@@ -219,6 +217,7 @@ export class Armory {
     if (w.slots.stock) acc.push(`Crosse ${CATALOG.stock[c.stock].name.toLowerCase()}`);
     if (c.mag === 'ext') acc.push(w.capacity.tube ? 'Extension de tube +2' : 'Talon de chargeur alu +5');
     $('#a-sheet-body', this.root).innerHTML = `
+      <p class="lead">${esc(c.muzzle === 'sd' ? 'Modérateur intégral · munition subsonique' : w.variant)}</p>
       <div class="spec-grid">${rows.map(([k, v]) => `<div class="spec"><small>${k}</small><b>${esc(v)}</b></div>`).join('')}</div>
       <h4>Signature sonore</h4><p>${suppressed
     ? (w.specs.v0SD && c.muzzle === 'sd' ? 'Modérateur intégral et munition subsonique : pas de claquement supersonique, détonation sourde, la mécanique de culasse devient le bruit dominant.' : w.sound.crack ? 'Silencieux : souffle de bouche fortement atténué, mais le projectile reste supersonique — le « claquement » balistique subsiste.' : 'Silencieux : détonation sourde et étouffée (« thwip » des gaz ralentis) ; on entend nettement le claquement sec de la culasse.')
@@ -243,12 +242,9 @@ export class Armory {
   // ---------- sélecteur d'arme ----------
 
   buildPicker() {
-    this.picker = $('#a-picker', this.root);
-    this.picker.innerHTML = WEAPONS.map((w, i) => `<button class="chip" type="button" role="tab" data-i="${i}" aria-selected="false">${esc(w.short)}</button>`).join('');
-    this.picker.addEventListener('click', (e) => {
-      const b = e.target.closest('.chip');
-      if (b && +b.dataset.i !== this.idx) this.go(+b.dataset.i, +b.dataset.i > this.idx ? 1 : -1);
-    });
+    this.picker = new Picker($('#a-picker', this.root),
+      WEAPONS.map((w) => ({ label: w.short, title: w.name, img: `assets/thumbs/gun-${w.id}.webp` })),
+      (i) => this.go(i, i > this.idx ? 1 : -1));
   }
 
   go(i, dir) {
@@ -289,8 +285,10 @@ export class Armory {
       .map(([k, l]) => `<button type="button" role="tab" data-seg="${k}" aria-selected="${k === this.seg}">${l}</button>`).join('');
   }
 
-  pill(attr, val, label, icon, pressed) {
-    return `<button class="pill" type="button" ${attr}="${val}" aria-pressed="${!!pressed}"><span class="ico">${ICON[icon] || ''}</span>${esc(label)}</button>`;
+  // Visuel d'une option : vignette 3D de la pièce si elle existe, sinon icône dessinée.
+  opt(attr, val, label, visual, pressed, cls = '') {
+    const v = visual.startsWith('acc-') ? thumb(visual) : `<span class="ico">${ICON[visual] || ''}</span>`;
+    return card(`${attr}="${val}"`, label, v, pressed, cls);
   }
 
   renderRail() {
@@ -300,38 +298,41 @@ export class Armory {
     const c = this.c;
     let h = '';
     const sep = '<span class="sep"></span>';
+    const OPTIC = { none: 'none', rds: 'acc-rds', holo: 'acc-holo' };
+    const MUZZLE = { none: 'none', comp: 'acc-comp', sup: 'acc-supRifle', sd: 'acc-sd', 'comp-int': 'acc-comp' };
+    const GRIP = { none: 'none', stubby: 'acc-stubby', angled: 'acc-angled', handstop: 'acc-handstop' };
     if (this.seg === 'optic') {
-      h = s.optic.map((o) => this.pill('data-optic', o, CATALOG.optic[o].name, o, c.optic === o)).join('');
+      h = s.optic.map((o) => this.opt('data-optic', o, CATALOG.optic[o].name, OPTIC[o], c.optic === o)).join('');
       if (s.magnifier && c.optic === 'holo') {
-        h += sep + this.pill('data-toggle', 'magnifier', 'Magnifier G33 ×3', 'mag3', c.magnifier);
-        if (c.magnifier) h += this.pill('data-toggle', 'magFlip', c.magFlip ? 'Remettre en ligne' : 'Basculer', 'flip', c.magFlip);
+        h += sep + this.opt('data-toggle', 'magnifier', 'Magnifier G33 ×3', 'acc-magnifier', c.magnifier, 'tog');
+        if (c.magnifier) h += this.opt('data-toggle', 'magFlip', c.magFlip ? 'Remettre en ligne' : 'Basculer', 'flip', c.magFlip, 'tog');
       }
     } else if (this.seg === 'tac') {
       if (s.laser) {
-        h += s.laser.map((o) => this.pill('data-laser', o, CATALOG.laser[o].name, o === 'none' ? 'none' : 'peq', c.laser === o)).join('');
+        h += s.laser.map((o) => this.opt('data-laser', o, CATALOG.laser[o].name, o === 'none' ? 'none' : 'acc-peq', c.laser === o)).join('');
         if (c.laser === 'peq') {
-          h += this.pill('data-lmode', 'vis', 'Laser visible', 'laser', c.laserMode === 'vis');
-          h += this.pill('data-lmode', 'ir', 'IR (NVG)', 'ir', c.laserMode === 'ir');
-          h += this.pill('data-lmode', 'off', 'Laser off', 'none', c.laserMode === 'off');
+          h += this.opt('data-lmode', 'vis', 'Laser visible', 'laser', c.laserMode === 'vis', 'mode');
+          h += this.opt('data-lmode', 'ir', 'IR (NVG)', 'ir', c.laserMode === 'ir', 'mode');
+          h += this.opt('data-lmode', 'off', 'Laser off', 'none', c.laserMode === 'off', 'mode');
         }
         if (s.light) h += sep;
       }
       if (s.light) {
-        h += s.light.map((o) => this.pill('data-light', o, CATALOG.light[o].name, o === 'none' ? 'none' : 'light', c.light === o)).join('');
-        if (c.light !== 'none') h += this.pill('data-toggle', 'lightOn', c.lightOn ? 'Éteindre' : 'Allumer', 'beam', c.lightOn);
+        h += s.light.map((o) => this.opt('data-light', o, CATALOG.light[o].name, o === 'none' ? 'none' : `acc-light-${o}`, c.light === o)).join('');
+        if (c.light !== 'none') h += this.opt('data-toggle', 'lightOn', c.lightOn ? 'Éteindre' : 'Allumer', 'beam', c.lightOn, 'tog');
       }
     } else if (this.seg === 'muzzle') {
-      h = s.muzzle.map((o) => this.pill('data-muzzle', o, CATALOG.muzzle[o].name, MUZZLE_ICON[o], c.muzzle === o)).join('');
+      h = s.muzzle.map((o) => this.opt('data-muzzle', o, CATALOG.muzzle[o].name, MUZZLE[o], c.muzzle === o)).join('');
     } else if (this.seg === 'grip') {
-      h = s.grip.map((o) => this.pill('data-grip', o, CATALOG.grip[o].name, o, c.grip === o)).join('');
+      h = s.grip.map((o) => this.opt('data-grip', o, CATALOG.grip[o].name, GRIP[o], c.grip === o)).join('');
     } else if (this.seg === 'stock') {
-      h = s.stock.map((o) => this.pill('data-stock', o, `Crosse ${CATALOG.stock[o].name.toLowerCase()}`, o, c.stock === o)).join('');
+      h = s.stock.map((o) => this.opt('data-stock', o, `Crosse ${CATALOG.stock[o].name.toLowerCase()}`, o, c.stock === o)).join('');
     } else if (this.seg === 'mag') {
-      const std = w.capacity.tube ? `Tube ${w.capacity.std} coups` : `Standard ${w.capacity.std} cps`;
-      const ext = w.capacity.tube ? `Extension ${w.capacity.ext} coups` : `Étendu ${w.capacity.ext} cps · talon alu`;
-      h = this.pill('data-mag', 'std', std, 'std', c.mag === 'std') + this.pill('data-mag', 'ext', ext, 'ext', c.mag === 'ext');
+      const std = w.capacity.tube ? `Tube ${w.capacity.std} coups` : `Standard ${w.capacity.std} coups`;
+      const ext = w.capacity.tube ? `Extension ${w.capacity.ext} coups` : `Étendu ${w.capacity.ext} coups`;
+      h = this.opt('data-mag', 'std', std, 'std', c.mag === 'std') + this.opt('data-mag', 'ext', ext, 'ext', c.mag === 'ext');
       if (c.mag === 'ext' && !w.capacity.tube) {
-        h += sep + PADS.map((p) => `<button class="rim-dot" type="button" data-pad="${p.id}" aria-pressed="${c.pad === p.id}" aria-label="Talon ${p.name}" title="Talon ${p.name}" style="--b:${p.hex};--hi:#fff;--lo:#000;border-radius:8px"></button>`).join('');
+        h += sep + PADS.map((p) => `<button class="swatch" type="button" data-pad="${p.id}" aria-pressed="${c.pad === p.id}"><i style="--c:${p.hex};border-radius:10px"></i><span>Talon ${esc(p.name.toLowerCase())}</span></button>`).join('');
       }
     } else {
       h = METAL.map((m) => `<button class="swatch" type="button" data-metal="${m.id}" aria-pressed="${c.metal === m.id}"><i style="--c:${m.hex}"></i><span>${esc(m.name)}</span></button>`).join('');
@@ -360,7 +361,7 @@ export class Armory {
     else if (d.stock) c.stock = d.stock;
     else if (d.mag) {
       c.mag = d.mag;
-      this.ammo = this.capacity();
+      this.fill();
       this.updateAmmo();
     } else if (d.pad) { c.pad = d.pad; rebuild = false; }
     else if (d.metal) { c.metal = d.metal; rebuild = false; rerail = false; }
@@ -406,6 +407,9 @@ export class Armory {
       if (e.cancelable) e.preventDefault();
       if (on) {
         this.audio.unlock();
+        this.btnFire.classList.remove('kick');
+        void this.btnFire.offsetWidth;
+        this.btnFire.classList.add('kick');
         if (e.pointerId != null) this.btnFire.setPointerCapture(e.pointerId);
         this.pull();
       } else {
@@ -440,10 +444,11 @@ export class Armory {
   }
 
   updateAmmo() {
-    const tube = this.w.capacity.tube;
-    this.ammoEl.innerHTML = `<b>${this.ammo}</b><span>${this.chambered ? '+1' : '+0'}</span><small>/${this.capacity()}${tube ? ' tube' : ''}</small>`;
-    this.ammoEl.classList.toggle('low', this.ammo <= Math.max(2, this.capacity() * 0.15));
-    this.ammoEl.classList.toggle('empty', !this.chambered && this.ammo === 0);
+    const n = this.rounds();
+    const cap = this.capacity();
+    this.ammoEl.innerHTML = `<b>${n}</b><small>/${cap}</small><i class="ammo-bar" style="--k:${(n / cap).toFixed(3)}"></i>`;
+    this.ammoEl.classList.toggle('low', n > 0 && n <= Math.max(2, cap * 0.2));
+    this.ammoEl.classList.toggle('empty', n === 0);
   }
 
   pull() {
@@ -498,7 +503,7 @@ export class Armory {
     if (this.reloading || this.busy) return;
     const w = this.w;
     const cap = this.capacity();
-    if (this.ammo >= cap && this.chambered) return;
+    if (this.rounds() >= cap) return;
     this.reloading = true;
     this.trigger = false;
     this.btnReload.classList.add('busy');
@@ -507,23 +512,22 @@ export class Armory {
     const wait = (ms) => new Promise((res) => setTimeout(res, ms));
     try {
       if (w.capacity.tube) {
-        while (this.ammo < cap) {
-          A.fx('shell');
-          await r.shellIn();
-          this.ammo++;
-          this.updateAmmo();
-          await wait(90);
-        }
+        const feed = async () => {
+          while (this.rounds() < cap) {
+            A.fx('shell');
+            await r.shellIn();
+            this.ammo++;
+            this.updateAmmo();
+            await wait(90);
+          }
+        };
+        await feed();
         if (!this.chambered) {
           A.fx('release');
           await r.rack(40, 90, 70);
           this.chambered = true;
           this.ammo--;
-          if (this.ammo < cap) {
-            A.fx('shell');
-            await r.shellIn();
-            this.ammo++;
-          }
+          await feed();
         }
       } else {
         A.fx('magOut');
@@ -531,7 +535,7 @@ export class Armory {
         await wait(160);
         A.fx('magIn');
         await r.magIn();
-        this.ammo = cap;
+        this.ammo = this.chambered ? cap - 1 : cap;
         this.updateAmmo();
         await wait(120);
         if (!this.chambered) {

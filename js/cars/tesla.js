@@ -3,7 +3,7 @@ export default {
   id: 'tesla',
   brand: 'Tesla',
   name: 'Model S Plaid',
-  mark: 'PLAID',
+  short: 'Model S',
   gen: 'Tri-moteur · 1 020 ch',
   length: 4970,
   // Modèle 3D (assets/models/selection.json) : un seul matériau d'origine, réparti ici pièce par pièce.

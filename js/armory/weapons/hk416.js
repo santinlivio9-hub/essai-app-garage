@@ -5,7 +5,6 @@ export default {
   maker: 'Heckler & Koch',
   name: 'HK416 A5',
   short: 'HK416 A5',
-  mark: '416',
   type: 'rifle',
   // Modèle 3D (assets/models/selection.json) : un seul mesh, découpé par zones.
   model: {

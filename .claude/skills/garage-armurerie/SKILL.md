@@ -15,7 +15,8 @@ Modèles 3D retenus : `assets/models/selection.json` ; crédits obligatoires : `
    (pas de pop-up, pas de carte opaque au centre).
 2. **HUD verre** : conteneurs translucides `backdrop-filter: blur(16px)`, fond `rgba(255,255,255,.05)`,
    bordures fines ; thème sombre et technique commun aux deux univers.
-3. **Données techniques** : badges discrets ou tiroir inférieur rétractable (glisser vers le bas pour replier).
+3. **Données techniques** : uniquement dans le tiroir inférieur rétractable (fiche). Sur la vue 3D : le **nom seul**
+   (ni badges, ni variante, ni filigrane) — demande explicite de l'utilisateur.
 4. **Visualisation en direct** : toute modification (teinte, vernis, accessoire) s'applique instantanément.
 5. **Capot ouvert** = vue d'ensemble du moteur et des composants internes uniquement, **sans** fiche
    technique supplémentaire.
@@ -46,7 +47,10 @@ basculable, PEQ-15 (visible/IR), lampes X300/Scout, compensateur, silencieux, po
 
 ## Architecture
 
-- `js/core/` partagé (audio unique déverrouillé au geste, tiroir, utilitaires).
+- `js/core/` partagé (audio unique déverrouillé au geste, tiroir, sélecteur `picker.js`, utilitaires dont `card()`).
+- Garage et Armurerie partagent le même langage visuel : sélecteur à vignettes, cartes d'options, boutons
+  poussoirs `.push` (START / FIRE). Toute évolution de l'un s'applique à l'autre.
+- Vignettes 3D : `assets/thumbs/*.webp`, générées par `node tools/thumbs.cjs` (serveur 8765 lancé).
 - `js/cars/*.js`, `js/armory/weapons/*.js` : une fiche par modèle (données + profil sonore).
 - `js/audio/` : synthèse moteur (AudioWorklet + repli). `js/armory/gun-audio.js` : détonations synthétisées.
 - Rendu 3D Three.js (`vendor/three`, r170) : `js/core/stage3d.js` (socle), `js/garage/scene3d.js`,
@@ -60,6 +64,7 @@ basculable, PEQ-15 (visible/IR), lampes X300/Scout, compensateur, silencieux, po
 1. `node --check` sur les fichiers JS modifiés ; `npm run build:css` si des classes Tailwind changent.
 2. `npm run test:audio` (niveaux moteurs + détonations, aucun NaN, crêtes < 1).
 3. `python3 -m http.server 8765` puis `node tools/phone.cjs <dossier> <scénario>` (basic, engine, swipe,
-   armory, shoot, combos, vitrine) ; regarder les captures, aucune `pageerror`.
+   armory, shoot, combos, vitrine) ; regarder les captures, aucune `pageerror`. Gros plans : `tools/closeup.cjs`
+   (accessoires), `tools/car-views.cjs` (voiture sous six angles).
 4. Tester aussi 375×667 (iPhone SE) et le paysage.
 5. Committer sur la branche de travail et pousser ; GitHub Pages se met à jour tout seul.
